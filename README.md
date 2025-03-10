@@ -1,44 +1,47 @@
-# Car rent
-Wypożyczalnia samochodów napisana w PHP wykożystująca baze danych. 
+# Car Rent
+Wypożyczalnia samochodów napisana w PHP, wykorzystująca bazę danych.  
 
 ### Jak uruchomić?
-Wpier wypełnij zmień nazwę pliku .env.example na .env.
-Następnie w polu MYSQL_ROOT_PASSWORD ustaw dowolne inne hasło
+Najpierw zmień nazwę pliku `.env.example` na `.env`.  
+Następnie w polu `MYSQL_ROOT_PASSWORD` ustaw dowolne inne hasło.  
 
-**P.S Jak nie masz dockera to polecam go zainstalować teraz.**
+**P.S. Jeśli nie masz Dockera, to polecam go zainstalować teraz.**  
 
-Następnie otwieramy konsole w folderze z plikami projektu i wykonujemy następujące czynności 
-````
+Otwórz konsolę w folderze z plikami projektu i wykonaj następujące czynności:  
+
+```sh
 docker-compose build
-````
-to buduje obraz Dockera. Teraz Wystarczy tylko włączyć sam konerner za pomocą komendy 
-````
+```
+To buduje obraz Dockera. Teraz wystarczy tylko uruchomić kontener za pomocą komendy:  
+```sh
 docker-compose up -d
-````
+```
 
-Jeżeli chemy wyłączyć kontenery tpo wykonujemy 
-````
+Jeżeli chcemy wyłączyć kontenery, wykonujemy:  
+```sh
 docker-compose down
-````
+```
 
 ### Ważne info
-W src trzymamy pliki html, php. W js i css wiadomo.
-Tu naważniejszy jest src, jak nie będą tam pliki to się nie wyświetlą. 
+W katalogu `src` trzymamy pliki HTML i PHP. Pliki JavaScript i CSS znajdują się w odpowiednich folderach.  
+Najważniejszy jest katalog `src` – jeśli nie będzie tam plików, strona się nie wyświetli.  
 
 ## Szybki poradnik Gita
-Git jest trudny. To prawda. Dlatego tu masz taką instrukcje jak przygorować folder i pobrać repo z tym wszystkim co w  nim jest. Po prostu kopjuj. 
+Git jest trudny. To prawda. Dlatego tutaj masz instrukcję, jak przygotować folder i pobrać repozytorium ze wszystkimi plikami. Po prostu kopiuj i wklej:  
 
-````
-git init #Inicializacja repo
-git branch -M main #Ustawienie na właściwy branch 
-git remote add origin https://github.com/mateusz-bogacz-collegiumwitelona/car_rental.git #Ustawienie właściwego adresu na repo
-git pull -u origin main #Pobranie zawartości z repo.
+```sh
+git init # Inicjalizacja repozytorium
+git branch -M main # Ustawienie głównej gałęzi
+git remote add origin https://github.com/mateusz-bogacz-collegiumwitelona/car_rental.git # Ustawienie adresu repozytorium
+git pull -u origin main # Pobranie zawartości repozytorium
+```
+
+A propos `git pull`... jeśli coś się zepsuje, to nie naprawi on Twojego repozytorium. Wtedy trzeba działać inaczej.  
+
+**Uwaga! Dwa razy się zastanów, zanim użyjesz tej komendy.**  
+
+```sh
+git reset --hard origin/main # Resetuje całą gałąź – usuwa wszystkie lokalne zmiany i przywraca stan z serwera
 ````
 
-A propos git pull... jak coś się zepsuje to nie naprawi on twojego repo, w tedy trzeba działać innaczej. Dokładniej rzecz ujumując.
-
-__Uwaga. Dwa razy się zastanów zanim to użyjesz.__
-
-````
-git reset --hard origin/main #Resetuje cały gałąź, czyli usuwa wszystkie lokalne zmiany i i przywraca to co jest na serwerze 
-````
+W razie w pisz.
