@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Szczegóły użytkownika</h1>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ users.name }} {{ users.surname }}</h5>
+        <p>PESEL: {{ users.pesel }}</p>
+        <p>Email: {{ users.email }}</p>
+        <h6>Adres:</h6>
+        <p>
+            {{ users.id_city.city }}, {{ users.id_city.street }} {{ users.id_city.street_number }}<br>
+            {{ users.id_city.zip_code }}
+        </p>
+        <a href="{% url 'user_list' %}" class="btn btn-primary">Powrót do listy</a>
+    </div>
+</div>
+{% endblock content %}

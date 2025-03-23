@@ -1,0 +1,37 @@
+# Pliki konfiguracyjne i wrażliwe dane
+.env
+.env.local
+.env.development
+.env.production
+.env.example
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Django/Flask
+db.sqlite3
+*.sqlite3
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# Pliki systemowe i IDE
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# Pliki build
+dist/
+build/
+
+# Git
+.git/
