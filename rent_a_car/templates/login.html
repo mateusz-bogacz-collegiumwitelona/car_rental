@@ -1,9 +1,11 @@
+{%load static%}
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Logowanie</title>
+    {% include "includes/head.html" %}
 </head>
 <body>
+    {% include "includes/navbar.html" %}
     <h2>Logowanie</h2>
     {% if messages %}
         <ul class="messages">
@@ -17,5 +19,7 @@
         {{ form.as_p }}
         <button type="submit">Zaloguj się</button>
     </form>
+
+    {% include "includes/footer.html" %}
 </body>
 </html>
