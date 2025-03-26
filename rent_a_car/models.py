@@ -5,8 +5,9 @@
 #   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
+# W pliku models.py
 from django.db import models
-
+from django.contrib.auth.hashers import make_password, check_password as django_check
 
 class Admin(models.Model):
     id_admin = models.AutoField(primary_key=True)
@@ -16,7 +17,8 @@ class Admin(models.Model):
     password = models.CharField(max_length=255)
 
     def check_password(self, raw_password):
-        return check_password(raw_password, self.password)
+        # Używaj importowanej funkcji django_check
+        return django_check(raw_password, self.password)
 
     def set_password(self, raw_password):
         self.password = make_password(raw_password)

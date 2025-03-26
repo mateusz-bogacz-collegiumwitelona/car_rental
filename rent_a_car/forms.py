@@ -1,5 +1,6 @@
 from django import forms
 
+#logowanie 
 class LoginForm(forms.Form):
     email = forms.EmailField(
         label='Email', 
