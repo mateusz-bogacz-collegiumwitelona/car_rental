@@ -1,14 +1,17 @@
-import logging
-
-from django.contrib import messages
-from django.contrib.auth.hashers import make_password
+from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-
+from django.contrib import messages
+from django.contrib.auth.hashers import make_password, check_password, is_password_usable
+from .forms import LoginForm
+from .models import Admin, Uzytkownicy, Auta, Miasta, Wypozyczenie, CzarnaLista
+import logging
+from django.contrib.auth.decorators import login_required
 from .forms import (
-    AutaForm, MiastaForm, UzytkownicyForm, WypozyczenieForm,
+    AutaForm, MiastaForm, UzytkownicyForm, WypozyczenieForm, 
     AdminForm, CzarnaListaForm, LoginForm
 )
-from .models import Admin, Uzytkownicy, Auta, Miasta, Wypozyczenie, CzarnaLista
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.hashers import check_password
 
 logger = logging.getLogger(__name__)
 
@@ -43,10 +46,13 @@ def login_view(request):
                     logger.info(f"Znaleziono admina: {admin.imie} {admin.nazwisko}")
                     logger.info(f"Hasło z bazy: {admin.password}")
                     logger.info(f"Podane hasło: {password}")
+                    
+                    # Bezpośrednie sprawdzenie z django.contrib.auth.hashers
                     from django.contrib.auth.hashers import check_password
                     direct_result = check_password(password, admin.password)
                     logger.info(f"Bezpośrednie sprawdzenie hasła: {direct_result}")
-
+                    
+                    # Sprawdź także przez metodę modelu
                     try:
                         model_result = admin.check_password(password)
                         logger.info(f"Sprawdzenie przez model: {model_result}")
@@ -63,8 +69,10 @@ def login_view(request):
                         logger.warning("Nieprawidłowe hasło")
                         messages.error(request, 'Nieprawidłowy email lub hasło')
                 else:
+                    # Sprawdź użytkownika
                     user = Uzytkownicy.objects.filter(email=email).first()
                     if user:
+                        # Sprawdź hasło użytkownika
                         from django.contrib.auth.hashers import check_password
                         if check_password(password, user.haslo):
                             request.session['user_type'] = 'user'

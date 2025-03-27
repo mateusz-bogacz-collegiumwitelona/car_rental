@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zarządzanie użytkownikami</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding-top: 2rem;
+            background-color: #212529;
+            color: white;
+            width: 250px;
+            z-index: 1000;
+        }
+        .sidebar a {
+            padding: 10px 15px;
+            text-decoration: none;
+            font-size: 16px;
+            color: white;
+            display: block;
+        }
+        .sidebar a:hover {
+            background-color: #343a40;
+        }
+        .content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .sidebar-header {
+            padding: 10px 15px;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    Panel Administracyjny
+                </div>
+                <a href="{% url 'zarzadzaj_flota' %}">Zarządzaj flotą</a>
+                <a href="{% url 'zarzadzaj_adresami' %}">Zarządzaj adresami zamieszkania</a>
+                <a href="{% url 'zarzadzaj_wypozyczeniami' %}">Zarządzaj wypożyczeniami</a>
+                <a href="{% url 'zarzadzaj_administratorami' %}">Zarządzaj administratorami</a>
+                <a href="{% url 'zarzadzaj_uzytkownikami' %}">Zarządzaj użytkownikami</a>
+                <a href="{% url 'zarzadzaj_czarna_lista' %}">Zarządzaj czarną listą</a>
+                <hr>
+                <a href="{% url 'admin_dashboard' %}">Powrót do panelu</a>
+                <a href="{% url 'logout' %}">Wyloguj</a>
+            </div>
+            
+            <!-- Content -->
+            <div class="content">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <div class="container-fluid">
+                    <h1 class="mb-4">Zarządzanie użytkownikami</h1>
+                    
+                    <!-- Tabela z listą użytkowników -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Lista wszystkich użytkowników</h5>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dodajUzytkownikaModal">
+                                Dodaj nowego użytkownika
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Imię</th>
+                                            <th>Nazwisko</th>
+                                            <th>PESEL</th>
+                                            <th>Email</th>
+                                            <th>Adres</th>
+                                            <th>Akcje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for uzytkownik in uzytkownicy %}
+                                        <tr>
+                                            <td>{{ uzytkownik.id_user }}</td>
+                                            <td>{{ uzytkownik.imie }}</td>
+                                            <td>{{ uzytkownik.nazwisko }}</td>
+                                            <td>{{ uzytkownik.pesel }}</td>
+                                            <td>{{ uzytkownik.email }}</td>
+                                            <td>{{ uzytkownik.id_zamieszkania.miasto }}, {{ uzytkownik.id_zamieszkania.ulica }} {{ uzytkownik.id_zamieszkania.nr_ulicy }}</td>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-warning edytuj-btn" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#edytujUzytkownikaModal"
+                                                        data-id="{{ uzytkownik.id_user }}"
+                                                        data-imie="{{ uzytkownik.imie }}"
+                                                        data-nazwisko="{{ uzytkownik.nazwisko }}"
+                                                        data-pesel="{{ uzytkownik.pesel }}"
+                                                        data-email="{{ uzytkownik.email }}"
+                                                        data-zamieszkanie="{{ uzytkownik.id_zamieszkania.id_zamieszkania }}">
+                                                    Edytuj
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-danger usun-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#usunUzytkownikaModal"
+                                                        data-id="{{ uzytkownik.id_user }}"
+                                                        data-nazwa="{{ uzytkownik.imie }} {{ uzytkownik.nazwisko }}">
+                                                    Usuń
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="7" class="text-center">Brak użytkowników w bazie danych.</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal do dodawania nowego użytkownika -->
+                <div class="modal fade" id="dodajUzytkownikaModal" tabindex="-1" aria-labelledby="dodajUzytkownikaModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="dodajUzytkownikaModalLabel">Dodaj nowego użytkownika</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="modal-body">
+                                    <input type="hidden" name="dodaj" value="1">
+                                    <div class="mb-3">
+                                        <label for="id_imie" class="form-label">{{ form.imie.label }}</label>
+                                        {{ form.imie }}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="id_nazwisko" class="form-label">{{ form.nazwisko.label }}</label>
+                                        {{ form.nazwisko }}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="id_pesel" class="form-label">{{ form.pesel.label }}</label>
+                                        {{ form.pesel }}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="id_email" class="form-label">{{ form.email.label }}</label>
+                                        {{ form.email }}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="id_haslo" class="form-label">{{ form.haslo.label }}</label>
+                                        {{ form.haslo }}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="id_potwierdzenie_hasla" class="form-label">{{ form.potwierdzenie_hasla.label }}</label>
+                                        {{ form.potwierdzenie_hasla }}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="id_id_zamieszkania" class="form-label">{{ form.id_zamieszkania.label }}</label>
+                                        {{ form.id_zamieszkania }}
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                                    <button type="submit" class="btn btn-primary">Zapisz</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal do edycji użytkownika -->
+                <div class="modal fade" id="edytujUzytkownikaModal" tabindex="-1" aria-labelledby="edytujUzytkownikaModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="edytujUzytkownikaModalLabel">Edytuj użytkownika</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="modal-body">
+                                    <input type="hidden" name="edytuj" value="1">
+                                    <input type="hidden" name="id_user" id="edit_id_user">
+                                    <div class="mb-3">
+                                        <label for="edit_imie" class="form-label">Imię</label>
+                                        <input type="text" class="form-control" id="edit_imie" name="imie" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit_nazwisko" class="form-label">Nazwisko</label>
+                                        <input type="text" class="form-control" id="edit_nazwisko" name="nazwisko" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit_pesel" class="form-label">PESEL</label>
+                                        <input type="text" class="form-control" id="edit_pesel" name="pesel" required maxlength="11" minlength="11">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit_email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="edit_email" name="email" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit_haslo" class="form-label">Hasło (pozostaw puste, jeśli nie chcesz zmieniać)</label>
+                                        <input type="password" class="form-control" id="edit_haslo" name="haslo">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit_potwierdzenie_hasla" class="form-label">Potwierdź hasło</label>
+                                        <input type="password" class="form-control" id="edit_potwierdzenie_hasla" name="potwierdzenie_hasla">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit_id_zamieszkania" class="form-label">Adres zamieszkania</label>
+                                        <select class="form-control" id="edit_id_zamieszkania" name="id_zamieszkania" required>
+                                            {% for adres in form.id_zamieszkania.field.queryset %}
+                                                <option value="{{ adres.id_zamieszkania }}">{{ adres.miasto }}, {{ adres.ulica }} {{ adres.nr_ulicy }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                                    <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal do usuwania użytkownika -->
+                <div class="modal fade" id="usunUzytkownikaModal" tabindex="-1" aria-labelledby="usunUzytkownikaModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="usunUzytkownikaModalLabel">Potwierdź usunięcie</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="modal-body">
+                                    <input type="hidden" name="usun" value="1">
+                                    <input type="hidden" name="id_user" id="delete_id_user">
+                                    <p>Czy na pewno chcesz usunąć użytkownika <strong id="delete_nazwa"></strong>?</p>
+                                    <p class="text-danger">Ta operacja jest nieodwracalna! Usunięcie użytkownika spowoduje również usunięcie wszystkich jego wypożyczeń.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                                    <button type="submit" class="btn btn-danger">Usuń</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Obsługa modala edycji
+            var edytujModal = document.getElementById('edytujUzytkownikaModal');
+            edytujModal.addEventListener('show.bs.modal', function(event) {
+                var button = event.relatedTarget;
+                var id = button.getAttribute('data-id');
+                var imie = button.getAttribute('data-imie');
+                var nazwisko = button.getAttribute('data-nazwisko');
+                var pesel = button.getAttribute('data-pesel');
+                var email = button.getAttribute('data-email');
+                var zamieszkanie = button.getAttribute('data-zamieszkanie');
+                
+                document.getElementById('edit_id_user').value = id;
+                document.getElementById('edit_imie').value = imie;
+                document.getElementById('edit_nazwisko').value = nazwisko;
+                document.getElementById('edit_pesel').value = pesel;
+                document.getElementById('edit_email').value = email;
+                document.getElementById('edit_id_zamieszkania').value = zamieszkanie;
+                document.getElementById('edit_haslo').value = '';
+                document.getElementById('edit_potwierdzenie_hasla').value = '';
+            });
+            
+            // Obsługa modala usuwania
+            var usunModal = document.getElementById('usunUzytkownikaModal');
+            usunModal.addEventListener('show.bs.modal', function(event) {
+                var button = event.relatedTarget;
+                var id = button.getAttribute('data-id');
+                var nazwa = button.getAttribute('data-nazwa');
+                
+                document.getElementById('delete_id_user').value = id;
+                document.getElementById('delete_nazwa').textContent = nazwa;
+            });
+        });
+    </script>
+</body>
+</html>
