@@ -1,10 +1,7 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zarządzanie administratorami</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% include "includes/head.html" %}
     <style>
         .sidebar {
             height: 100vh;
@@ -54,20 +51,7 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="sidebar">
-                <div class="sidebar-header">
-                    Panel Administracyjny
-                </div>
-                <a href="{% url 'zarzadzaj_flota' %}">Zarządzaj flotą</a>
-                <a href="{% url 'zarzadzaj_adresami' %}">Zarządzaj adresami zamieszkania</a>
-                <a href="{% url 'zarzadzaj_wypozyczeniami' %}">Zarządzaj wypożyczeniami</a>
-                <a href="{% url 'zarzadzaj_administratorami' %}">Zarządzaj administratorami</a>
-                <a href="{% url 'zarzadzaj_uzytkownikami' %}">Zarządzaj użytkownikami</a>
-                <a href="{% url 'zarzadzaj_czarna_lista' %}">Zarządzaj czarną listą</a>
-                <hr>
-                <a href="{% url 'admin_dashboard' %}">Powrót do panelu</a>
-                <a href="{% url 'logout' %}">Wyloguj</a>
-            </div>
+            {% include 'includes/admin_sidebar.html'%}
             
             <!-- Content -->
             <div class="content">
@@ -80,14 +64,14 @@
                 {% endif %}
                 
                 <div class="container-fluid">
-                    <h1 class="mb-4">Zarządzanie administratorami</h1>
+                    <h1 class="mb-4">Zarządzanie wypożyczeniami</h1>
                     
-                    <!-- Tabela z listą administratorów -->
+                    <!-- Tabela z listą wypożyczeń -->
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Lista wszystkich administratorów</h5>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dodajAdminaModal">
-                                Dodaj nowego administratora
+                            <h5 class="mb-0">Lista wszystkich wypożyczeń</h5>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dodajWypozyczenieModal">
+                                Dodaj nowe wypożyczenie
                             </button>
                         </div>
                         <div class="card-body">
@@ -96,42 +80,44 @@
                                     <thead class="table-dark">
                                         <tr>
                                             <th>ID</th>
-                                            <th>Imię</th>
-                                            <th>Nazwisko</th>
-                                            <th>Email</th>
+                                            <th>Auto</th>
+                                            <th>Użytkownik</th>
+                                            <th>Data początkowa</th>
+                                            <th>Data końcowa</th>
                                             <th>Akcje</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for admin in administratorzy %}
+                                        {% for wypozyczenie in wypozyczenia %}
                                         <tr>
-                                            <td>{{ admin.id_admin }}</td>
-                                            <td>{{ admin.imie }}</td>
-                                            <td>{{ admin.nazwisko }}</td>
-                                            <td>{{ admin.email }}</td>
+                                            <td>{{ wypozyczenie.id_wypozyczenia }}</td>
+                                            <td>{{ wypozyczenie.id_auta.marka }} {{ wypozyczenie.id_auta.model }}</td>
+                                            <td>{{ wypozyczenie.id_user.imie }} {{ wypozyczenie.id_user.nazwisko }}</td>
+                                            <td>{{ wypozyczenie.data_poczatkowa|date:"d.m.Y" }}</td>
+                                            <td>{{ wypozyczenie.data_koncowa|date:"d.m.Y" }}</td>
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-warning edytuj-btn" 
                                                         data-bs-toggle="modal" 
-                                                        data-bs-target="#edytujAdminaModal"
-                                                        data-id="{{ admin.id_admin }}"
-                                                        data-imie="{{ admin.imie }}"
-                                                        data-nazwisko="{{ admin.nazwisko }}"
-                                                        data-email="{{ admin.email }}">
+                                                        data-bs-target="#edytujWypozyczenieModal"
+                                                        data-id="{{ wypozyczenie.id_wypozyczenia }}"
+                                                        data-auto="{{ wypozyczenie.id_auta.id_auta }}"
+                                                        data-user="{{ wypozyczenie.id_user.id_user }}"
+                                                        data-data-poczatkowa="{{ wypozyczenie.data_poczatkowa|date:'Y-m-d' }}"
+                                                        data-data-koncowa="{{ wypozyczenie.data_koncowa|date:'Y-m-d' }}">
                                                     Edytuj
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-danger usun-btn"
                                                         data-bs-toggle="modal"
-                                                        data-bs-target="#usunAdminaModal"
-                                                        data-id="{{ admin.id_admin }}"
-                                                        data-nazwa="{{ admin.imie }} {{ admin.nazwisko }}"
-                                                        {% if admin.id_admin == request.session.user_id %}disabled{% endif %}>
+                                                        data-bs-target="#usunWypozyczenieModal"
+                                                        data-id="{{ wypozyczenie.id_wypozyczenia }}"
+                                                        data-nazwa="Auto: {{ wypozyczenie.id_auta.marka }} {{ wypozyczenie.id_auta.model }}, Użytkownik: {{ wypozyczenie.id_user.imie }} {{ wypozyczenie.id_user.nazwisko }}">
                                                     Usuń
                                                 </button>
                                             </td>
                                         </tr>
                                         {% empty %}
                                         <tr>
-                                            <td colspan="5" class="text-center">Brak administratorów w bazie danych.</td>
+                                            <td colspan="6" class="text-center">Brak wypożyczeń w bazie danych.</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -141,12 +127,12 @@
                     </div>
                 </div>
                 
-                <!-- Modal do dodawania nowego administratora -->
-                <div class="modal fade" id="dodajAdminaModal" tabindex="-1" aria-labelledby="dodajAdminaModalLabel" aria-hidden="true">
+                <!-- Modal do dodawania nowego wypożyczenia -->
+                <div class="modal fade" id="dodajWypozyczenieModal" tabindex="-1" aria-labelledby="dodajWypozyczenieModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="dodajAdminaModalLabel">Dodaj nowego administratora</h5>
+                                <h5 class="modal-title" id="dodajWypozyczenieModalLabel">Dodaj nowe wypożyczenie</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="post">
@@ -154,24 +140,20 @@
                                 <div class="modal-body">
                                     <input type="hidden" name="dodaj" value="1">
                                     <div class="mb-3">
-                                        <label for="id_imie" class="form-label">{{ form.imie.label }}</label>
-                                        {{ form.imie }}
+                                        <label for="id_id_auta" class="form-label">{{ form.id_auta.label }}</label>
+                                        {{ form.id_auta }}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="id_nazwisko" class="form-label">{{ form.nazwisko.label }}</label>
-                                        {{ form.nazwisko }}
+                                        <label for="id_id_user" class="form-label">{{ form.id_user.label }}</label>
+                                        {{ form.id_user }}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="id_email" class="form-label">{{ form.email.label }}</label>
-                                        {{ form.email }}
+                                        <label for="id_data_poczatkowa" class="form-label">{{ form.data_poczatkowa.label }}</label>
+                                        {{ form.data_poczatkowa }}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="id_password" class="form-label">{{ form.password.label }}</label>
-                                        {{ form.password }}
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="id_potwierdzenie_hasla" class="form-label">{{ form.potwierdzenie_hasla.label }}</label>
-                                        {{ form.potwierdzenie_hasla }}
+                                        <label for="id_data_koncowa" class="form-label">{{ form.data_koncowa.label }}</label>
+                                        {{ form.data_koncowa }}
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -183,38 +165,42 @@
                     </div>
                 </div>
 
-                <!-- Modal do edycji administratora -->
-                <div class="modal fade" id="edytujAdminaModal" tabindex="-1" aria-labelledby="edytujAdminaModalLabel" aria-hidden="true">
+                <!-- Modal do edycji wypożyczenia -->
+                <div class="modal fade" id="edytujWypozyczenieModal" tabindex="-1" aria-labelledby="edytujWypozyczenieModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="edytujAdminaModalLabel">Edytuj administratora</h5>
+                                <h5 class="modal-title" id="edytujWypozyczenieModalLabel">Edytuj wypożyczenie</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="post">
                                 {% csrf_token %}
                                 <div class="modal-body">
                                     <input type="hidden" name="edytuj" value="1">
-                                    <input type="hidden" name="id_admin" id="edit_id_admin">
+                                    <input type="hidden" name="id_wypozyczenia" id="edit_id_wypozyczenia">
                                     <div class="mb-3">
-                                        <label for="edit_imie" class="form-label">Imię</label>
-                                        <input type="text" class="form-control" id="edit_imie" name="imie" required>
+                                        <label for="edit_id_auta" class="form-label">Auto</label>
+                                        <select class="form-control" id="edit_id_auta" name="id_auta" required>
+                                            {% for auto in form.id_auta.field.queryset %}
+                                                <option value="{{ auto.id_auta }}">{{ auto.marka }} {{ auto.model }}</option>
+                                            {% endfor %}
+                                        </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit_nazwisko" class="form-label">Nazwisko</label>
-                                        <input type="text" class="form-control" id="edit_nazwisko" name="nazwisko" required>
+                                        <label for="edit_id_user" class="form-label">Użytkownik</label>
+                                        <select class="form-control" id="edit_id_user" name="id_user" required>
+                                            {% for user in form.id_user.field.queryset %}
+                                                <option value="{{ user.id_user }}">{{ user.imie }} {{ user.nazwisko }}</option>
+                                            {% endfor %}
+                                        </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit_email" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="edit_email" name="email" required>
+                                        <label for="edit_data_poczatkowa" class="form-label">Data początkowa</label>
+                                        <input type="date" class="form-control" id="edit_data_poczatkowa" name="data_poczatkowa" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit_password" class="form-label">Hasło (pozostaw puste, jeśli nie chcesz zmieniać)</label>
-                                        <input type="password" class="form-control" id="edit_password" name="password">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="edit_potwierdzenie_hasla" class="form-label">Potwierdź hasło</label>
-                                        <input type="password" class="form-control" id="edit_potwierdzenie_hasla" name="potwierdzenie_hasla">
+                                        <label for="edit_data_koncowa" class="form-label">Data końcowa</label>
+                                        <input type="date" class="form-control" id="edit_data_koncowa" name="data_koncowa" required>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -226,20 +212,20 @@
                     </div>
                 </div>
 
-                <!-- Modal do usuwania administratora -->
-                <div class="modal fade" id="usunAdminaModal" tabindex="-1" aria-labelledby="usunAdminaModalLabel" aria-hidden="true">
+                <!-- Modal do usuwania wypożyczenia -->
+                <div class="modal fade" id="usunWypozyczenieModal" tabindex="-1" aria-labelledby="usunWypozyczenieModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="usunAdminaModalLabel">Potwierdź usunięcie</h5>
+                                <h5 class="modal-title" id="usunWypozyczenieModalLabel">Potwierdź usunięcie</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="post">
                                 {% csrf_token %}
                                 <div class="modal-body">
                                     <input type="hidden" name="usun" value="1">
-                                    <input type="hidden" name="id_admin" id="delete_id_admin">
-                                    <p>Czy na pewno chcesz usunąć administratora <strong id="delete_nazwa"></strong>?</p>
+                                    <input type="hidden" name="id_wypozyczenia" id="delete_id_wypozyczenia">
+                                    <p>Czy na pewno chcesz usunąć wypożyczenie: <strong id="delete_nazwa"></strong>?</p>
                                     <p class="text-danger">Ta operacja jest nieodwracalna!</p>
                                 </div>
                                 <div class="modal-footer">
@@ -258,30 +244,30 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Obsługa modala edycji
-            var edytujModal = document.getElementById('edytujAdminaModal');
+            var edytujModal = document.getElementById('edytujWypozyczenieModal');
             edytujModal.addEventListener('show.bs.modal', function(event) {
                 var button = event.relatedTarget;
                 var id = button.getAttribute('data-id');
-                var imie = button.getAttribute('data-imie');
-                var nazwisko = button.getAttribute('data-nazwisko');
-                var email = button.getAttribute('data-email');
+                var auto = button.getAttribute('data-auto');
+                var user = button.getAttribute('data-user');
+                var dataPoczatkowa = button.getAttribute('data-data-poczatkowa');
+                var dataKoncowa = button.getAttribute('data-data-koncowa');
                 
-                document.getElementById('edit_id_admin').value = id;
-                document.getElementById('edit_imie').value = imie;
-                document.getElementById('edit_nazwisko').value = nazwisko;
-                document.getElementById('edit_email').value = email;
-                document.getElementById('edit_password').value = '';
-                document.getElementById('edit_potwierdzenie_hasla').value = '';
+                document.getElementById('edit_id_wypozyczenia').value = id;
+                document.getElementById('edit_id_auta').value = auto;
+                document.getElementById('edit_id_user').value = user;
+                document.getElementById('edit_data_poczatkowa').value = dataPoczatkowa;
+                document.getElementById('edit_data_koncowa').value = dataKoncowa;
             });
             
             // Obsługa modala usuwania
-            var usunModal = document.getElementById('usunAdminaModal');
+            var usunModal = document.getElementById('usunWypozyczenieModal');
             usunModal.addEventListener('show.bs.modal', function(event) {
                 var button = event.relatedTarget;
                 var id = button.getAttribute('data-id');
                 var nazwa = button.getAttribute('data-nazwa');
                 
-                document.getElementById('delete_id_admin').value = id;
+                document.getElementById('delete_id_wypozyczenia').value = id;
                 document.getElementById('delete_nazwa').textContent = nazwa;
             });
         });

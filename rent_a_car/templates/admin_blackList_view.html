@@ -1,10 +1,7 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zarządzanie adresami</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% include "includes/head.html" %}
     <style>
         .sidebar {
             height: 100vh;
@@ -52,22 +49,8 @@
 </head>
 <body>
     <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="sidebar">
-                <div class="sidebar-header">
-                    Panel Administracyjny
-                </div>
-                <a href="{% url 'zarzadzaj_flota' %}">Zarządzaj flotą</a>
-                <a href="{% url 'zarzadzaj_adresami' %}">Zarządzaj adresami zamieszkania</a>
-                <a href="{% url 'zarzadzaj_wypozyczeniami' %}">Zarządzaj wypożyczeniami</a>
-                <a href="{% url 'zarzadzaj_administratorami' %}">Zarządzaj administratorami</a>
-                <a href="{% url 'zarzadzaj_uzytkownikami' %}">Zarządzaj użytkownikami</a>
-                <a href="{% url 'zarzadzaj_czarna_lista' %}">Zarządzaj czarną listą</a>
-                <hr>
-                <a href="{% url 'admin_dashboard' %}">Powrót do panelu</a>
-                <a href="{% url 'logout' %}">Wyloguj</a>
-            </div>
+        <div class="row">  
+            {% include 'includes/admin_sidebar.html'%}
             
             <!-- Content -->
             <div class="content">
@@ -80,14 +63,14 @@
                 {% endif %}
                 
                 <div class="container-fluid">
-                    <h1 class="mb-4">Zarządzanie adresami zamieszkania</h1>
+                    <h1 class="mb-4">Zarządzanie czarną listą</h1>
                     
-                    <!-- Tabela z listą adresów -->
+                    <!-- Tabela z czarną listą -->
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Lista wszystkich adresów</h5>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dodajAdresModal">
-                                Dodaj nowy adres
+                            <h5 class="mb-0">Lista zablokowanych użytkowników</h5>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dodajDoCzarnejListyModal">
+                                Dodaj użytkownika do czarnej listy
                             </button>
                         </div>
                         <div class="card-body">
@@ -96,44 +79,47 @@
                                     <thead class="table-dark">
                                         <tr>
                                             <th>ID</th>
-                                            <th>Miasto</th>
-                                            <th>Ulica</th>
-                                            <th>Nr ulicy</th>
-                                            <th>Kod pocztowy</th>
+                                            <th>Użytkownik</th>
+                                            <th>Powód</th>
+                                            <th>Data początkowa</th>
+                                            <th>Data końcowa</th>
+                                            <th>Administrator</th>
                                             <th>Akcje</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for miasto in miasta %}
+                                        {% for wpis in czarna_lista %}
                                         <tr>
-                                            <td>{{ miasto.id_zamieszkania }}</td>
-                                            <td>{{ miasto.miasto }}</td>
-                                            <td>{{ miasto.ulica }}</td>
-                                            <td>{{ miasto.nr_ulicy }}</td>
-                                            <td>{{ miasto.kod_pocztowy }}</td>
+                                            <td>{{ wpis.id_bl }}</td>
+                                            <td>{{ wpis.id_user.imie }} {{ wpis.id_user.nazwisko }}</td>
+                                            <td>{{ wpis.powod }}</td>
+                                            <td>{{ wpis.data_poczatkowa|date:"d.m.Y" }}</td>
+                                            <td>{{ wpis.data_koncowa|date:"d.m.Y" }}</td>
+                                            <td>{{ wpis.id_admin.imie }} {{ wpis.id_admin.nazwisko }}</td>
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-warning edytuj-btn" 
                                                         data-bs-toggle="modal" 
-                                                        data-bs-target="#edytujAdresModal"
-                                                        data-id="{{ miasto.id_zamieszkania }}"
-                                                        data-miasto="{{ miasto.miasto }}"
-                                                        data-ulica="{{ miasto.ulica }}"
-                                                        data-nr="{{ miasto.nr_ulicy }}"
-                                                        data-kod="{{ miasto.kod_pocztowy }}">
+                                                        data-bs-target="#edytujWpisCzarnejListyModal"
+                                                        data-id="{{ wpis.id_bl }}"
+                                                        data-user="{{ wpis.id_user.id_user }}"
+                                                        data-powod="{{ wpis.powod }}"
+                                                        data-data-poczatkowa="{{ wpis.data_poczatkowa|date:'Y-m-d' }}"
+                                                        data-data-koncowa="{{ wpis.data_koncowa|date:'Y-m-d' }}"
+                                                        data-admin="{{ wpis.id_admin.id_admin }}">
                                                     Edytuj
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-danger usun-btn"
                                                         data-bs-toggle="modal"
-                                                        data-bs-target="#usunAdresModal"
-                                                        data-id="{{ miasto.id_zamieszkania }}"
-                                                        data-nazwa="{{ miasto.miasto }}, {{ miasto.ulica }} {{ miasto.nr_ulicy }}">
+                                                        data-bs-target="#usunZCzarnejListyModal"
+                                                        data-id="{{ wpis.id_bl }}"
+                                                        data-nazwa="{{ wpis.id_user.imie }} {{ wpis.id_user.nazwisko }}">
                                                     Usuń
                                                 </button>
                                             </td>
                                         </tr>
                                         {% empty %}
                                         <tr>
-                                            <td colspan="6" class="text-center">Brak adresów w bazie danych.</td>
+                                            <td colspan="7" class="text-center">Brak wpisów na czarnej liście.</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -143,12 +129,12 @@
                     </div>
                 </div>
                 
-                <!-- Modal do dodawania nowego adresu -->
-                <div class="modal fade" id="dodajAdresModal" tabindex="-1" aria-labelledby="dodajAdresModalLabel" aria-hidden="true">
+                <!-- Modal do dodawania użytkownika do czarnej listy -->
+                <div class="modal fade" id="dodajDoCzarnejListyModal" tabindex="-1" aria-labelledby="dodajDoCzarnejListyModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="dodajAdresModalLabel">Dodaj nowy adres</h5>
+                                <h5 class="modal-title" id="dodajDoCzarnejListyModalLabel">Dodaj użytkownika do czarnej listy</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="post">
@@ -156,20 +142,24 @@
                                 <div class="modal-body">
                                     <input type="hidden" name="dodaj" value="1">
                                     <div class="mb-3">
-                                        <label for="id_miasto" class="form-label">{{ form.miasto.label }}</label>
-                                        {{ form.miasto }}
+                                        <label for="id_id_user" class="form-label">{{ form.id_user.label }}</label>
+                                        {{ form.id_user }}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="id_ulica" class="form-label">{{ form.ulica.label }}</label>
-                                        {{ form.ulica }}
+                                        <label for="id_powod" class="form-label">{{ form.powod.label }}</label>
+                                        {{ form.powod }}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="id_nr_ulicy" class="form-label">{{ form.nr_ulicy.label }}</label>
-                                        {{ form.nr_ulicy }}
+                                        <label for="id_data_poczatkowa" class="form-label">{{ form.data_poczatkowa.label }}</label>
+                                        {{ form.data_poczatkowa }}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="id_kod_pocztowy" class="form-label">{{ form.kod_pocztowy.label }}</label>
-                                        {{ form.kod_pocztowy }}
+                                        <label for="id_data_koncowa" class="form-label">{{ form.data_koncowa.label }}</label>
+                                        {{ form.data_koncowa }}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="id_id_admin" class="form-label">{{ form.id_admin.label }}</label>
+                                        {{ form.id_admin }}
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -181,34 +171,46 @@
                     </div>
                 </div>
 
-                <!-- Modal do edycji adresu -->
-                <div class="modal fade" id="edytujAdresModal" tabindex="-1" aria-labelledby="edytujAdresModalLabel" aria-hidden="true">
+                <!-- Modal do edycji wpisu na czarnej liście -->
+                <div class="modal fade" id="edytujWpisCzarnejListyModal" tabindex="-1" aria-labelledby="edytujWpisCzarnejListyModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="edytujAdresModalLabel">Edytuj adres</h5>
+                                <h5 class="modal-title" id="edytujWpisCzarnejListyModalLabel">Edytuj wpis czarnej listy</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="post">
                                 {% csrf_token %}
                                 <div class="modal-body">
                                     <input type="hidden" name="edytuj" value="1">
-                                    <input type="hidden" name="id_zamieszkania" id="edit_id_zamieszkania">
+                                    <input type="hidden" name="id_bl" id="edit_id_bl">
                                     <div class="mb-3">
-                                        <label for="edit_miasto" class="form-label">Miasto</label>
-                                        <input type="text" class="form-control" id="edit_miasto" name="miasto" required>
+                                        <label for="edit_id_user" class="form-label">Użytkownik</label>
+                                        <select class="form-control" id="edit_id_user" name="id_user" required>
+                                            {% for user in form.id_user.field.queryset %}
+                                                <option value="{{ user.id_user }}">{{ user.imie }} {{ user.nazwisko }}</option>
+                                            {% endfor %}
+                                        </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit_ulica" class="form-label">Ulica</label>
-                                        <input type="text" class="form-control" id="edit_ulica" name="ulica" required>
+                                        <label for="edit_powod" class="form-label">Powód</label>
+                                        <textarea class="form-control" id="edit_powod" name="powod" rows="2" required></textarea>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit_nr_ulicy" class="form-label">Nr ulicy</label>
-                                        <input type="text" class="form-control" id="edit_nr_ulicy" name="nr_ulicy" required>
+                                        <label for="edit_data_poczatkowa" class="form-label">Data początkowa</label>
+                                        <input type="date" class="form-control" id="edit_data_poczatkowa" name="data_poczatkowa" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit_kod_pocztowy" class="form-label">Kod pocztowy</label>
-                                        <input type="text" class="form-control" id="edit_kod_pocztowy" name="kod_pocztowy" required>
+                                        <label for="edit_data_koncowa" class="form-label">Data końcowa</label>
+                                        <input type="date" class="form-control" id="edit_data_koncowa" name="data_koncowa" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit_id_admin" class="form-label">Administrator</label>
+                                        <select class="form-control" id="edit_id_admin" name="id_admin" required>
+                                            {% for admin in form.id_admin.field.queryset %}
+                                                <option value="{{ admin.id_admin }}">{{ admin.imie }} {{ admin.nazwisko }}</option>
+                                            {% endfor %}
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -220,21 +222,21 @@
                     </div>
                 </div>
 
-                <!-- Modal do usuwania adresu -->
-                <div class="modal fade" id="usunAdresModal" tabindex="-1" aria-labelledby="usunAdresModalLabel" aria-hidden="true">
+                <!-- Modal do usuwania z czarnej listy -->
+                <div class="modal fade" id="usunZCzarnejListyModal" tabindex="-1" aria-labelledby="usunZCzarnejListyModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="usunAdresModalLabel">Potwierdź usunięcie</h5>
+                                <h5 class="modal-title" id="usunZCzarnejListyModalLabel">Potwierdź usunięcie</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="post">
                                 {% csrf_token %}
                                 <div class="modal-body">
                                     <input type="hidden" name="usun" value="1">
-                                    <input type="hidden" name="id_zamieszkania" id="delete_id_zamieszkania">
-                                    <p>Czy na pewno chcesz usunąć adres <strong id="delete_nazwa"></strong>?</p>
-                                    <p class="text-danger">Ta operacja jest nieodwracalna! Upewnij się, że żaden użytkownik nie jest przypisany do tego adresu.</p>
+                                    <input type="hidden" name="id_bl" id="delete_id_bl">
+                                    <p>Czy na pewno chcesz usunąć użytkownika <strong id="delete_nazwa"></strong> z czarnej listy?</p>
+                                    <p class="text-danger">Ta operacja jest nieodwracalna!</p>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
@@ -252,30 +254,32 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Obsługa modala edycji
-            var edytujModal = document.getElementById('edytujAdresModal');
+            var edytujModal = document.getElementById('edytujWpisCzarnejListyModal');
             edytujModal.addEventListener('show.bs.modal', function(event) {
                 var button = event.relatedTarget;
                 var id = button.getAttribute('data-id');
-                var miasto = button.getAttribute('data-miasto');
-                var ulica = button.getAttribute('data-ulica');
-                var nr = button.getAttribute('data-nr');
-                var kod = button.getAttribute('data-kod');
+                var user = button.getAttribute('data-user');
+                var powod = button.getAttribute('data-powod');
+                var dataPoczatkowa = button.getAttribute('data-data-poczatkowa');
+                var dataKoncowa = button.getAttribute('data-data-koncowa');
+                var admin = button.getAttribute('data-admin');
                 
-                document.getElementById('edit_id_zamieszkania').value = id;
-                document.getElementById('edit_miasto').value = miasto;
-                document.getElementById('edit_ulica').value = ulica;
-                document.getElementById('edit_nr_ulicy').value = nr;
-                document.getElementById('edit_kod_pocztowy').value = kod;
+                document.getElementById('edit_id_bl').value = id;
+                document.getElementById('edit_id_user').value = user;
+                document.getElementById('edit_powod').value = powod;
+                document.getElementById('edit_data_poczatkowa').value = dataPoczatkowa;
+                document.getElementById('edit_data_koncowa').value = dataKoncowa;
+                document.getElementById('edit_id_admin').value = admin;
             });
             
             // Obsługa modala usuwania
-            var usunModal = document.getElementById('usunAdresModal');
+            var usunModal = document.getElementById('usunZCzarnejListyModal');
             usunModal.addEventListener('show.bs.modal', function(event) {
                 var button = event.relatedTarget;
                 var id = button.getAttribute('data-id');
                 var nazwa = button.getAttribute('data-nazwa');
                 
-                document.getElementById('delete_id_zamieszkania').value = id;
+                document.getElementById('delete_id_bl').value = id;
                 document.getElementById('delete_nazwa').textContent = nazwa;
             });
         });

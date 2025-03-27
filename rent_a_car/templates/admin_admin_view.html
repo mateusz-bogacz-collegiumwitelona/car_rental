@@ -1,10 +1,7 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zarządzanie czarną listą</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% include "includes/head.html" %}
     <style>
         .sidebar {
             height: 100vh;
@@ -54,20 +51,7 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="sidebar">
-                <div class="sidebar-header">
-                    Panel Administracyjny
-                </div>
-                <a href="{% url 'zarzadzaj_flota' %}">Zarządzaj flotą</a>
-                <a href="{% url 'zarzadzaj_adresami' %}">Zarządzaj adresami zamieszkania</a>
-                <a href="{% url 'zarzadzaj_wypozyczeniami' %}">Zarządzaj wypożyczeniami</a>
-                <a href="{% url 'zarzadzaj_administratorami' %}">Zarządzaj administratorami</a>
-                <a href="{% url 'zarzadzaj_uzytkownikami' %}">Zarządzaj użytkownikami</a>
-                <a href="{% url 'zarzadzaj_czarna_lista' %}">Zarządzaj czarną listą</a>
-                <hr>
-                <a href="{% url 'admin_dashboard' %}">Powrót do panelu</a>
-                <a href="{% url 'logout' %}">Wyloguj</a>
-            </div>
+            {% include 'includes/admin_sidebar.html'%}
             
             <!-- Content -->
             <div class="content">
@@ -80,14 +64,14 @@
                 {% endif %}
                 
                 <div class="container-fluid">
-                    <h1 class="mb-4">Zarządzanie czarną listą</h1>
+                    <h1 class="mb-4">Zarządzanie administratorami</h1>
                     
-                    <!-- Tabela z czarną listą -->
+                    <!-- Tabela z listą administratorów -->
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Lista zablokowanych użytkowników</h5>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dodajDoCzarnejListyModal">
-                                Dodaj użytkownika do czarnej listy
+                            <h5 class="mb-0">Lista wszystkich administratorów</h5>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dodajAdminaModal">
+                                Dodaj nowego administratora
                             </button>
                         </div>
                         <div class="card-body">
@@ -96,47 +80,42 @@
                                     <thead class="table-dark">
                                         <tr>
                                             <th>ID</th>
-                                            <th>Użytkownik</th>
-                                            <th>Powód</th>
-                                            <th>Data początkowa</th>
-                                            <th>Data końcowa</th>
-                                            <th>Administrator</th>
+                                            <th>Imię</th>
+                                            <th>Nazwisko</th>
+                                            <th>Email</th>
                                             <th>Akcje</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for wpis in czarna_lista %}
+                                        {% for admin in administratorzy %}
                                         <tr>
-                                            <td>{{ wpis.id_bl }}</td>
-                                            <td>{{ wpis.id_user.imie }} {{ wpis.id_user.nazwisko }}</td>
-                                            <td>{{ wpis.powod }}</td>
-                                            <td>{{ wpis.data_poczatkowa|date:"d.m.Y" }}</td>
-                                            <td>{{ wpis.data_koncowa|date:"d.m.Y" }}</td>
-                                            <td>{{ wpis.id_admin.imie }} {{ wpis.id_admin.nazwisko }}</td>
+                                            <td>{{ admin.id_admin }}</td>
+                                            <td>{{ admin.imie }}</td>
+                                            <td>{{ admin.nazwisko }}</td>
+                                            <td>{{ admin.email }}</td>
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-warning edytuj-btn" 
                                                         data-bs-toggle="modal" 
-                                                        data-bs-target="#edytujWpisCzarnejListyModal"
-                                                        data-id="{{ wpis.id_bl }}"
-                                                        data-user="{{ wpis.id_user.id_user }}"
-                                                        data-powod="{{ wpis.powod }}"
-                                                        data-data-poczatkowa="{{ wpis.data_poczatkowa|date:'Y-m-d' }}"
-                                                        data-data-koncowa="{{ wpis.data_koncowa|date:'Y-m-d' }}"
-                                                        data-admin="{{ wpis.id_admin.id_admin }}">
+                                                        data-bs-target="#edytujAdminaModal"
+                                                        data-id="{{ admin.id_admin }}"
+                                                        data-imie="{{ admin.imie }}"
+                                                        data-nazwisko="{{ admin.nazwisko }}"
+                                                        data-email="{{ admin.email }}">
                                                     Edytuj
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-danger usun-btn"
                                                         data-bs-toggle="modal"
-                                                        data-bs-target="#usunZCzarnejListyModal"
-                                                        data-id="{{ wpis.id_bl }}"
-                                                        data-nazwa="{{ wpis.id_user.imie }} {{ wpis.id_user.nazwisko }}">
+                                                        data-bs-target="#usunAdminaModal"
+                                                        data-id="{{ admin.id_admin }}"
+                                                        data-nazwa="{{ admin.imie }} {{ admin.nazwisko }}"
+                                                        {% if admin.id_admin == request.session.user_id %}disabled{% endif %}>
                                                     Usuń
                                                 </button>
                                             </td>
                                         </tr>
                                         {% empty %}
                                         <tr>
-                                            <td colspan="7" class="text-center">Brak wpisów na czarnej liście.</td>
+                                            <td colspan="5" class="text-center">Brak administratorów w bazie danych.</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -146,12 +125,12 @@
                     </div>
                 </div>
                 
-                <!-- Modal do dodawania użytkownika do czarnej listy -->
-                <div class="modal fade" id="dodajDoCzarnejListyModal" tabindex="-1" aria-labelledby="dodajDoCzarnejListyModalLabel" aria-hidden="true">
+                <!-- Modal do dodawania nowego administratora -->
+                <div class="modal fade" id="dodajAdminaModal" tabindex="-1" aria-labelledby="dodajAdminaModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="dodajDoCzarnejListyModalLabel">Dodaj użytkownika do czarnej listy</h5>
+                                <h5 class="modal-title" id="dodajAdminaModalLabel">Dodaj nowego administratora</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="post">
@@ -159,24 +138,24 @@
                                 <div class="modal-body">
                                     <input type="hidden" name="dodaj" value="1">
                                     <div class="mb-3">
-                                        <label for="id_id_user" class="form-label">{{ form.id_user.label }}</label>
-                                        {{ form.id_user }}
+                                        <label for="id_imie" class="form-label">{{ form.imie.label }}</label>
+                                        {{ form.imie }}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="id_powod" class="form-label">{{ form.powod.label }}</label>
-                                        {{ form.powod }}
+                                        <label for="id_nazwisko" class="form-label">{{ form.nazwisko.label }}</label>
+                                        {{ form.nazwisko }}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="id_data_poczatkowa" class="form-label">{{ form.data_poczatkowa.label }}</label>
-                                        {{ form.data_poczatkowa }}
+                                        <label for="id_email" class="form-label">{{ form.email.label }}</label>
+                                        {{ form.email }}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="id_data_koncowa" class="form-label">{{ form.data_koncowa.label }}</label>
-                                        {{ form.data_koncowa }}
+                                        <label for="id_password" class="form-label">{{ form.password.label }}</label>
+                                        {{ form.password }}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="id_id_admin" class="form-label">{{ form.id_admin.label }}</label>
-                                        {{ form.id_admin }}
+                                        <label for="id_potwierdzenie_hasla" class="form-label">{{ form.potwierdzenie_hasla.label }}</label>
+                                        {{ form.potwierdzenie_hasla }}
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -188,46 +167,38 @@
                     </div>
                 </div>
 
-                <!-- Modal do edycji wpisu na czarnej liście -->
-                <div class="modal fade" id="edytujWpisCzarnejListyModal" tabindex="-1" aria-labelledby="edytujWpisCzarnejListyModalLabel" aria-hidden="true">
+                <!-- Modal do edycji administratora -->
+                <div class="modal fade" id="edytujAdminaModal" tabindex="-1" aria-labelledby="edytujAdminaModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="edytujWpisCzarnejListyModalLabel">Edytuj wpis czarnej listy</h5>
+                                <h5 class="modal-title" id="edytujAdminaModalLabel">Edytuj administratora</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="post">
                                 {% csrf_token %}
                                 <div class="modal-body">
                                     <input type="hidden" name="edytuj" value="1">
-                                    <input type="hidden" name="id_bl" id="edit_id_bl">
+                                    <input type="hidden" name="id_admin" id="edit_id_admin">
                                     <div class="mb-3">
-                                        <label for="edit_id_user" class="form-label">Użytkownik</label>
-                                        <select class="form-control" id="edit_id_user" name="id_user" required>
-                                            {% for user in form.id_user.field.queryset %}
-                                                <option value="{{ user.id_user }}">{{ user.imie }} {{ user.nazwisko }}</option>
-                                            {% endfor %}
-                                        </select>
+                                        <label for="edit_imie" class="form-label">Imię</label>
+                                        <input type="text" class="form-control" id="edit_imie" name="imie" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit_powod" class="form-label">Powód</label>
-                                        <textarea class="form-control" id="edit_powod" name="powod" rows="2" required></textarea>
+                                        <label for="edit_nazwisko" class="form-label">Nazwisko</label>
+                                        <input type="text" class="form-control" id="edit_nazwisko" name="nazwisko" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit_data_poczatkowa" class="form-label">Data początkowa</label>
-                                        <input type="date" class="form-control" id="edit_data_poczatkowa" name="data_poczatkowa" required>
+                                        <label for="edit_email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="edit_email" name="email" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit_data_koncowa" class="form-label">Data końcowa</label>
-                                        <input type="date" class="form-control" id="edit_data_koncowa" name="data_koncowa" required>
+                                        <label for="edit_password" class="form-label">Hasło (pozostaw puste, jeśli nie chcesz zmieniać)</label>
+                                        <input type="password" class="form-control" id="edit_password" name="password">
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit_id_admin" class="form-label">Administrator</label>
-                                        <select class="form-control" id="edit_id_admin" name="id_admin" required>
-                                            {% for admin in form.id_admin.field.queryset %}
-                                                <option value="{{ admin.id_admin }}">{{ admin.imie }} {{ admin.nazwisko }}</option>
-                                            {% endfor %}
-                                        </select>
+                                        <label for="edit_potwierdzenie_hasla" class="form-label">Potwierdź hasło</label>
+                                        <input type="password" class="form-control" id="edit_potwierdzenie_hasla" name="potwierdzenie_hasla">
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -239,20 +210,20 @@
                     </div>
                 </div>
 
-                <!-- Modal do usuwania z czarnej listy -->
-                <div class="modal fade" id="usunZCzarnejListyModal" tabindex="-1" aria-labelledby="usunZCzarnejListyModalLabel" aria-hidden="true">
+                <!-- Modal do usuwania administratora -->
+                <div class="modal fade" id="usunAdminaModal" tabindex="-1" aria-labelledby="usunAdminaModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="usunZCzarnejListyModalLabel">Potwierdź usunięcie</h5>
+                                <h5 class="modal-title" id="usunAdminaModalLabel">Potwierdź usunięcie</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="post">
                                 {% csrf_token %}
                                 <div class="modal-body">
                                     <input type="hidden" name="usun" value="1">
-                                    <input type="hidden" name="id_bl" id="delete_id_bl">
-                                    <p>Czy na pewno chcesz usunąć użytkownika <strong id="delete_nazwa"></strong> z czarnej listy?</p>
+                                    <input type="hidden" name="id_admin" id="delete_id_admin">
+                                    <p>Czy na pewno chcesz usunąć administratora <strong id="delete_nazwa"></strong>?</p>
                                     <p class="text-danger">Ta operacja jest nieodwracalna!</p>
                                 </div>
                                 <div class="modal-footer">
@@ -271,32 +242,30 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Obsługa modala edycji
-            var edytujModal = document.getElementById('edytujWpisCzarnejListyModal');
+            var edytujModal = document.getElementById('edytujAdminaModal');
             edytujModal.addEventListener('show.bs.modal', function(event) {
                 var button = event.relatedTarget;
                 var id = button.getAttribute('data-id');
-                var user = button.getAttribute('data-user');
-                var powod = button.getAttribute('data-powod');
-                var dataPoczatkowa = button.getAttribute('data-data-poczatkowa');
-                var dataKoncowa = button.getAttribute('data-data-koncowa');
-                var admin = button.getAttribute('data-admin');
+                var imie = button.getAttribute('data-imie');
+                var nazwisko = button.getAttribute('data-nazwisko');
+                var email = button.getAttribute('data-email');
                 
-                document.getElementById('edit_id_bl').value = id;
-                document.getElementById('edit_id_user').value = user;
-                document.getElementById('edit_powod').value = powod;
-                document.getElementById('edit_data_poczatkowa').value = dataPoczatkowa;
-                document.getElementById('edit_data_koncowa').value = dataKoncowa;
-                document.getElementById('edit_id_admin').value = admin;
+                document.getElementById('edit_id_admin').value = id;
+                document.getElementById('edit_imie').value = imie;
+                document.getElementById('edit_nazwisko').value = nazwisko;
+                document.getElementById('edit_email').value = email;
+                document.getElementById('edit_password').value = '';
+                document.getElementById('edit_potwierdzenie_hasla').value = '';
             });
             
             // Obsługa modala usuwania
-            var usunModal = document.getElementById('usunZCzarnejListyModal');
+            var usunModal = document.getElementById('usunAdminaModal');
             usunModal.addEventListener('show.bs.modal', function(event) {
                 var button = event.relatedTarget;
                 var id = button.getAttribute('data-id');
                 var nazwa = button.getAttribute('data-nazwa');
                 
-                document.getElementById('delete_id_bl').value = id;
+                document.getElementById('delete_id_admin').value = id;
                 document.getElementById('delete_nazwa').textContent = nazwa;
             });
         });

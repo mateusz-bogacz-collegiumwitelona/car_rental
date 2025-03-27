@@ -1,10 +1,7 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zarządzanie flotą</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% include "includes/head.html" %}
     <style>
         .sidebar {
             height: 100vh;
@@ -54,20 +51,7 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="sidebar">
-                <div class="sidebar-header">
-                    Panel Administracyjny
-                </div>
-                <a href="{% url 'zarzadzaj_flota' %}">Zarządzaj flotą</a>
-                <a href="{% url 'zarzadzaj_adresami' %}">Zarządzaj adresami zamieszkania</a>
-                <a href="{% url 'zarzadzaj_wypozyczeniami' %}">Zarządzaj wypożyczeniami</a>
-                <a href="{% url 'zarzadzaj_administratorami' %}">Zarządzaj administratorami</a>
-                <a href="{% url 'zarzadzaj_uzytkownikami' %}">Zarządzaj użytkownikami</a>
-                <a href="{% url 'zarzadzaj_czarna_lista' %}">Zarządzaj czarną listą</a>
-                <hr>
-                <a href="{% url 'admin_dashboard' %}">Powrót do panelu</a>
-                <a href="{% url 'logout' %}">Wyloguj</a>
-            </div>
+            {% include 'includes/admin_sidebar.html'%}
             
             <!-- Content -->
             <div class="content">
@@ -80,14 +64,14 @@
                 {% endif %}
                 
                 <div class="container-fluid">
-                    <h1 class="mb-4">Zarządzanie flotą samochodową</h1>
+                    <h1 class="mb-4">Zarządzanie adresami zamieszkania</h1>
                     
-                    <!-- Tabela z listą aut -->
+                    <!-- Tabela z listą adresów -->
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Lista wszystkich aut</h5>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dodajAutoModal">
-                                Dodaj nowe auto
+                            <h5 class="mb-0">Lista wszystkich adresów</h5>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dodajAdresModal">
+                                Dodaj nowy adres
                             </button>
                         </div>
                         <div class="card-body">
@@ -96,43 +80,44 @@
                                     <thead class="table-dark">
                                         <tr>
                                             <th>ID</th>
-                                            <th>Marka</th>
-                                            <th>Model</th>
-                                            <th>Rocznik</th>
+                                            <th>Miasto</th>
+                                            <th>Ulica</th>
+                                            <th>Nr ulicy</th>
+                                            <th>Kod pocztowy</th>
                                             <th>Akcje</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for auto in auta %}
+                                        {% for miasto in miasta %}
                                         <tr>
-                                            <td>{{ auto.id_auta }}</td>
-                                            <td>{{ auto.marka }}</td>
-                                            <td>{{ auto.model }}</td>
-                                            <td>{{ auto.rocznik }}</td>
+                                            <td>{{ miasto.id_zamieszkania }}</td>
+                                            <td>{{ miasto.miasto }}</td>
+                                            <td>{{ miasto.ulica }}</td>
+                                            <td>{{ miasto.nr_ulicy }}</td>
+                                            <td>{{ miasto.kod_pocztowy }}</td>
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-warning edytuj-btn" 
                                                         data-bs-toggle="modal" 
-                                                        data-bs-target="#edytujAutoModal"
-                                                        data-id="{{ auto.id_auta }}"
-                                                        data-marka="{{ auto.marka }}"
-                                                        data-model="{{ auto.model }}"
-                                                        data-rocznik="{{ auto.rocznik }}"
-                                                        data-opis="{{ auto.opis|default:'' }}"
-                                                        data-osiagi="{{ auto.osiagi|default:'' }}">
+                                                        data-bs-target="#edytujAdresModal"
+                                                        data-id="{{ miasto.id_zamieszkania }}"
+                                                        data-miasto="{{ miasto.miasto }}"
+                                                        data-ulica="{{ miasto.ulica }}"
+                                                        data-nr="{{ miasto.nr_ulicy }}"
+                                                        data-kod="{{ miasto.kod_pocztowy }}">
                                                     Edytuj
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-danger usun-btn"
                                                         data-bs-toggle="modal"
-                                                        data-bs-target="#usunAutoModal"
-                                                        data-id="{{ auto.id_auta }}"
-                                                        data-nazwa="{{ auto.marka }} {{ auto.model }}">
+                                                        data-bs-target="#usunAdresModal"
+                                                        data-id="{{ miasto.id_zamieszkania }}"
+                                                        data-nazwa="{{ miasto.miasto }}, {{ miasto.ulica }} {{ miasto.nr_ulicy }}">
                                                     Usuń
                                                 </button>
                                             </td>
                                         </tr>
                                         {% empty %}
                                         <tr>
-                                            <td colspan="5" class="text-center">Brak aut w bazie danych.</td>
+                                            <td colspan="6" class="text-center">Brak adresów w bazie danych.</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -142,12 +127,12 @@
                     </div>
                 </div>
                 
-                <!-- Modal do dodawania nowego auta -->
-                <div class="modal fade" id="dodajAutoModal" tabindex="-1" aria-labelledby="dodajAutoModalLabel" aria-hidden="true">
+                <!-- Modal do dodawania nowego adresu -->
+                <div class="modal fade" id="dodajAdresModal" tabindex="-1" aria-labelledby="dodajAdresModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="dodajAutoModalLabel">Dodaj nowe auto</h5>
+                                <h5 class="modal-title" id="dodajAdresModalLabel">Dodaj nowy adres</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="post">
@@ -155,24 +140,20 @@
                                 <div class="modal-body">
                                     <input type="hidden" name="dodaj" value="1">
                                     <div class="mb-3">
-                                        <label for="id_marka" class="form-label">{{ form.marka.label }}</label>
-                                        {{ form.marka }}
+                                        <label for="id_miasto" class="form-label">{{ form.miasto.label }}</label>
+                                        {{ form.miasto }}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="id_model" class="form-label">{{ form.model.label }}</label>
-                                        {{ form.model }}
+                                        <label for="id_ulica" class="form-label">{{ form.ulica.label }}</label>
+                                        {{ form.ulica }}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="id_rocznik" class="form-label">{{ form.rocznik.label }}</label>
-                                        {{ form.rocznik }}
+                                        <label for="id_nr_ulicy" class="form-label">{{ form.nr_ulicy.label }}</label>
+                                        {{ form.nr_ulicy }}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="id_opis" class="form-label">{{ form.opis.label }}</label>
-                                        {{ form.opis }}
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="id_osiagi" class="form-label">{{ form.osiagi.label }}</label>
-                                        {{ form.osiagi }}
+                                        <label for="id_kod_pocztowy" class="form-label">{{ form.kod_pocztowy.label }}</label>
+                                        {{ form.kod_pocztowy }}
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -184,38 +165,34 @@
                     </div>
                 </div>
 
-                <!-- Modal do edycji auta -->
-                <div class="modal fade" id="edytujAutoModal" tabindex="-1" aria-labelledby="edytujAutoModalLabel" aria-hidden="true">
+                <!-- Modal do edycji adresu -->
+                <div class="modal fade" id="edytujAdresModal" tabindex="-1" aria-labelledby="edytujAdresModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="edytujAutoModalLabel">Edytuj auto</h5>
+                                <h5 class="modal-title" id="edytujAdresModalLabel">Edytuj adres</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="post">
                                 {% csrf_token %}
                                 <div class="modal-body">
                                     <input type="hidden" name="edytuj" value="1">
-                                    <input type="hidden" name="id_auta" id="edit_id_auta">
+                                    <input type="hidden" name="id_zamieszkania" id="edit_id_zamieszkania">
                                     <div class="mb-3">
-                                        <label for="edit_marka" class="form-label">Marka</label>
-                                        <input type="text" class="form-control" id="edit_marka" name="marka" required>
+                                        <label for="edit_miasto" class="form-label">Miasto</label>
+                                        <input type="text" class="form-control" id="edit_miasto" name="miasto" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit_model" class="form-label">Model</label>
-                                        <input type="text" class="form-control" id="edit_model" name="model" required>
+                                        <label for="edit_ulica" class="form-label">Ulica</label>
+                                        <input type="text" class="form-control" id="edit_ulica" name="ulica" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit_rocznik" class="form-label">Rocznik</label>
-                                        <input type="number" class="form-control" id="edit_rocznik" name="rocznik" required>
+                                        <label for="edit_nr_ulicy" class="form-label">Nr ulicy</label>
+                                        <input type="text" class="form-control" id="edit_nr_ulicy" name="nr_ulicy" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit_opis" class="form-label">Opis</label>
-                                        <textarea class="form-control" id="edit_opis" name="opis" rows="4"></textarea>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="edit_osiagi" class="form-label">Osiągi</label>
-                                        <textarea class="form-control" id="edit_osiagi" name="osiagi" rows="4"></textarea>
+                                        <label for="edit_kod_pocztowy" class="form-label">Kod pocztowy</label>
+                                        <input type="text" class="form-control" id="edit_kod_pocztowy" name="kod_pocztowy" required>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -227,21 +204,21 @@
                     </div>
                 </div>
 
-                <!-- Modal do usuwania auta -->
-                <div class="modal fade" id="usunAutoModal" tabindex="-1" aria-labelledby="usunAutoModalLabel" aria-hidden="true">
+                <!-- Modal do usuwania adresu -->
+                <div class="modal fade" id="usunAdresModal" tabindex="-1" aria-labelledby="usunAdresModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="usunAutoModalLabel">Potwierdź usunięcie</h5>
+                                <h5 class="modal-title" id="usunAdresModalLabel">Potwierdź usunięcie</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form method="post">
                                 {% csrf_token %}
                                 <div class="modal-body">
                                     <input type="hidden" name="usun" value="1">
-                                    <input type="hidden" name="id_auta" id="delete_id_auta">
-                                    <p>Czy na pewno chcesz usunąć auto <strong id="delete_nazwa"></strong>?</p>
-                                    <p class="text-danger">Ta operacja jest nieodwracalna!</p>
+                                    <input type="hidden" name="id_zamieszkania" id="delete_id_zamieszkania">
+                                    <p>Czy na pewno chcesz usunąć adres <strong id="delete_nazwa"></strong>?</p>
+                                    <p class="text-danger">Ta operacja jest nieodwracalna! Upewnij się, że żaden użytkownik nie jest przypisany do tego adresu.</p>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
@@ -259,32 +236,30 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Obsługa modala edycji
-            var edytujModal = document.getElementById('edytujAutoModal');
+            var edytujModal = document.getElementById('edytujAdresModal');
             edytujModal.addEventListener('show.bs.modal', function(event) {
                 var button = event.relatedTarget;
                 var id = button.getAttribute('data-id');
-                var marka = button.getAttribute('data-marka');
-                var model = button.getAttribute('data-model');
-                var rocznik = button.getAttribute('data-rocznik');
-                var opis = button.getAttribute('data-opis');
-                var osiagi = button.getAttribute('data-osiagi');
+                var miasto = button.getAttribute('data-miasto');
+                var ulica = button.getAttribute('data-ulica');
+                var nr = button.getAttribute('data-nr');
+                var kod = button.getAttribute('data-kod');
                 
-                document.getElementById('edit_id_auta').value = id;
-                document.getElementById('edit_marka').value = marka;
-                document.getElementById('edit_model').value = model;
-                document.getElementById('edit_rocznik').value = rocznik;
-                document.getElementById('edit_opis').value = opis;
-                document.getElementById('edit_osiagi').value = osiagi;
+                document.getElementById('edit_id_zamieszkania').value = id;
+                document.getElementById('edit_miasto').value = miasto;
+                document.getElementById('edit_ulica').value = ulica;
+                document.getElementById('edit_nr_ulicy').value = nr;
+                document.getElementById('edit_kod_pocztowy').value = kod;
             });
             
             // Obsługa modala usuwania
-            var usunModal = document.getElementById('usunAutoModal');
+            var usunModal = document.getElementById('usunAdresModal');
             usunModal.addEventListener('show.bs.modal', function(event) {
                 var button = event.relatedTarget;
                 var id = button.getAttribute('data-id');
                 var nazwa = button.getAttribute('data-nazwa');
                 
-                document.getElementById('delete_id_auta').value = id;
+                document.getElementById('delete_id_zamieszkania').value = id;
                 document.getElementById('delete_nazwa').textContent = nazwa;
             });
         });

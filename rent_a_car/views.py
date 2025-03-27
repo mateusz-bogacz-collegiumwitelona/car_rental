@@ -93,6 +93,7 @@ def is_admin_logged_in(requst):
 def is_user_logged_in(requst):
     return requst.session.get('user_type') == 'user' and requst.session.get('user_id')
 
+#wylogowanie 
 def logout_view(requst):
     if 'user_type' in requst.session:
         del requst.session['user_type']
@@ -102,7 +103,8 @@ def logout_view(requst):
 
     messages.success('Zostałeś wylogowany')
 
-def zarzadzaj_flota(request):
+#Funckje zarządzania autami
+def admin_car_view(request):
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
         return redirect('login')
@@ -116,13 +118,13 @@ def zarzadzaj_flota(request):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Auto zostało dodane.')
-                return redirect('zarzadzaj_flota')
+                return redirect('admin_car_view')
         elif 'usun' in request.POST:
             id_auta = request.POST.get('id_auta')
             auto = get_object_or_404(Auta, id_auta=id_auta)
             auto.delete()
             messages.success(request, 'Auto zostało usunięte.')
-            return redirect('zarzadzaj_flota')
+            return redirect('admin_car_view')
         elif 'edytuj' in request.POST:
             id_auta = request.POST.get('id_auta')
             auto = get_object_or_404(Auta, id_auta=id_auta)
@@ -130,12 +132,12 @@ def zarzadzaj_flota(request):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Auto zostało zaktualizowane.')
-                return redirect('zarzadzaj_flota')
+                return redirect('admin_car_view')
     
-    return render(request, 'zarzadzaj_flota.html', {'auta': auta, 'form': form})
+    return render(request, 'admin_car_view.html', {'auta': auta, 'form': form})
 
-# Funkcje zarządzania adresami zamieszkania (Miasta)
-def zarzadzaj_adresami(request):
+# Funkcje zarządzania adresami zamieszkania
+def admin_address_view(request):
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
         return redirect('login')
@@ -149,13 +151,13 @@ def zarzadzaj_adresami(request):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Adres został dodany.')
-                return redirect('zarzadzaj_adresami')
+                return redirect('admin_address_view')
         elif 'usun' in request.POST:
             id_zamieszkania = request.POST.get('id_zamieszkania')
             miasto = get_object_or_404(Miasta, id_zamieszkania=id_zamieszkania)
             miasto.delete()
             messages.success(request, 'Adres został usunięty.')
-            return redirect('zarzadzaj_adresami')
+            return redirect('admin_address_view')
         elif 'edytuj' in request.POST:
             id_zamieszkania = request.POST.get('id_zamieszkania')
             miasto = get_object_or_404(Miasta, id_zamieszkania=id_zamieszkania)
@@ -163,12 +165,12 @@ def zarzadzaj_adresami(request):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Adres został zaktualizowany.')
-                return redirect('zarzadzaj_adresami')
+                return redirect('admin_address_view')
     
-    return render(request, 'zarzadzaj_adresami.html', {'miasta': miasta, 'form': form})
+    return render(request, 'admin_address_view.html', {'miasta': miasta, 'form': form})
 
 # Funkcje zarządzania wypożyczeniami
-def zarzadzaj_wypozyczeniami(request):
+def admin_rent_view(request):
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
         return redirect('login')
@@ -182,13 +184,13 @@ def zarzadzaj_wypozyczeniami(request):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Wypożyczenie zostało dodane.')
-                return redirect('zarzadzaj_wypozyczeniami')
+                return redirect('admin_rent_view')
         elif 'usun' in request.POST:
             id_wypozyczenia = request.POST.get('id_wypozyczenia')
             wypozyczenie = get_object_or_404(Wypozyczenie, id_wypozyczenia=id_wypozyczenia)
             wypozyczenie.delete()
             messages.success(request, 'Wypożyczenie zostało usunięte.')
-            return redirect('zarzadzaj_wypozyczeniami')
+            return redirect('admin_rent_view')
         elif 'edytuj' in request.POST:
             id_wypozyczenia = request.POST.get('id_wypozyczenia')
             wypozyczenie = get_object_or_404(Wypozyczenie, id_wypozyczenia=id_wypozyczenia)
@@ -196,12 +198,12 @@ def zarzadzaj_wypozyczeniami(request):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Wypożyczenie zostało zaktualizowane.')
-                return redirect('zarzadzaj_wypozyczeniami')
+                return redirect('admin_rent_view')
     
-    return render(request, 'zarzadzaj_wypozyczeniami.html', {'wypozyczenia': wypozyczenia, 'form': form})
+    return render(request, 'admin_rent_view.html', {'wypozyczenia': wypozyczenia, 'form': form})
 
 # Funkcje zarządzania administratorami
-def zarzadzaj_administratorami(request):
+def admin_admin_view(request):
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
         return redirect('login')
@@ -217,18 +219,18 @@ def zarzadzaj_administratorami(request):
                 admin.password = make_password(form.cleaned_data['password'])
                 admin.save()
                 messages.success(request, 'Administrator został dodany.')
-                return redirect('zarzadzaj_administratorami')
+                return redirect('admin_admin_view')
         elif 'usun' in request.POST:
             id_admin = request.POST.get('id_admin')
             # Nie pozwól usunąć zalogowanego administratora
             if int(id_admin) == request.session.get('user_id'):
                 messages.error(request, 'Nie możesz usunąć swojego konta!')
-                return redirect('zarzadzaj_administratorami')
+                return redirect('admin_admin_view')
                 
             admin = get_object_or_404(Admin, id_admin=id_admin)
             admin.delete()
             messages.success(request, 'Administrator został usunięty.')
-            return redirect('zarzadzaj_administratorami')
+            return redirect('admin_admin_view')
         elif 'edytuj' in request.POST:
             id_admin = request.POST.get('id_admin')
             admin = get_object_or_404(Admin, id_admin=id_admin)
@@ -239,12 +241,12 @@ def zarzadzaj_administratorami(request):
                     admin.password = make_password(form.cleaned_data['password'])
                 admin.save()
                 messages.success(request, 'Administrator został zaktualizowany.')
-                return redirect('zarzadzaj_administratorami')
+                return redirect('admin_admin_view')
     
-    return render(request, 'zarzadzaj_administratorami.html', {'administratorzy': administratorzy, 'form': form})
+    return render(request, 'admin_admin_view.html', {'administratorzy': administratorzy, 'form': form})
 
 # Funkcje zarządzania użytkownikami
-def zarzadzaj_uzytkownikami(request):
+def admin_user_view(request):
     uzytkownicy = Uzytkownicy.objects.all()
     print(f"Liczba użytkowników: {uzytkownicy.count()}")
     for user in uzytkownicy:
@@ -265,13 +267,13 @@ def zarzadzaj_uzytkownikami(request):
                 uzytkownik.haslo = make_password(form.cleaned_data['haslo'])
                 uzytkownik.save()
                 messages.success(request, 'Użytkownik został dodany.')
-                return redirect('zarzadzaj_uzytkownikami')
+                return redirect('admin_user_view')
         elif 'usun' in request.POST:
             id_user = request.POST.get('id_user')
             uzytkownik = get_object_or_404(Uzytkownicy, id_user=id_user)
             uzytkownik.delete()
             messages.success(request, 'Użytkownik został usunięty.')
-            return redirect('zarzadzaj_uzytkownikami')
+            return redirect('admin_user_view')
         elif 'edytuj' in request.POST:
             id_user = request.POST.get('id_user')
             uzytkownik = get_object_or_404(Uzytkownicy, id_user=id_user)
@@ -282,12 +284,12 @@ def zarzadzaj_uzytkownikami(request):
                     uzytkownik.haslo = make_password(form.cleaned_data['haslo'])
                 uzytkownik.save()
                 messages.success(request, 'Użytkownik został zaktualizowany.')
-                return redirect('zarzadzaj_uzytkownikami')
+                return redirect('admin_user_view')
     
-    return render(request, 'zarzadzaj_uzytkownikami.html', {'uzytkownicy': uzytkownicy, 'form': form})
+    return render(request, 'admin_user_view.html', {'uzytkownicy': uzytkownicy, 'form': form})
 
 # Funkcje zarządzania czarną listą
-def zarzadzaj_czarna_lista(request):
+def admin_blackList_view(request):
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
         return redirect('login')
@@ -310,13 +312,13 @@ def zarzadzaj_czarna_lista(request):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Użytkownik został dodany do czarnej listy.')
-                return redirect('zarzadzaj_czarna_lista')
+                return redirect('admin_blackList_view')
         elif 'usun' in request.POST:
             id_bl = request.POST.get('id_bl')
             wpis = get_object_or_404(CzarnaLista, id_bl=id_bl)
             wpis.delete()
             messages.success(request, 'Wpis został usunięty z czarnej listy.')
-            return redirect('zarzadzaj_czarna_lista')
+            return redirect('admin_blackList_view')
         elif 'edytuj' in request.POST:
             id_bl = request.POST.get('id_bl')
             wpis = get_object_or_404(CzarnaLista, id_bl=id_bl)
@@ -324,7 +326,7 @@ def zarzadzaj_czarna_lista(request):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Wpis czarnej listy został zaktualizowany.')
-                return redirect('zarzadzaj_czarna_lista')
+                return redirect('admin_blackList_view')
     
-    return render(request, 'zarzadzaj_czarna_lista.html', {'czarna_lista': czarna_lista, 'form': form})
+    return render(request, 'admin_blackList_view.html', {'czarna_lista': czarna_lista, 'form': form})
                 
