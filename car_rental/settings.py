@@ -26,8 +26,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.environ.get("DEBUG", default=0))
-
+#DEBUG = bool(os.environ.get("DEBUG", default=0))
+DEBUG = False
 	
 # 'DJANGO_ALLOWED_HOSTS' should be a single string of hosts with a , between each.
 # For example: 'DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1,[::1]'
@@ -70,6 +70,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media',
             ],
         },
     },
@@ -165,3 +166,6 @@ LOGGING = {
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Przechowuje sesje w bazie danych
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

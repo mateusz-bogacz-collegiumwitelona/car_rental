@@ -14,5 +14,12 @@ urlpatterns = [
     path('admin/administratorzy', views.admin_admin_view, name='admin_admin_view'),
     path('admin/uzytkownicy', views.admin_user_view, name='admin_user_view'),
     path('admin/czarna-lista', views.admin_blackList_view, name='admin_blackList_view'),
+    path('admin/samochod/<int:car_id>/zdjecia', views.admin_car_photos, name='admin_car_photos'),
+    path('admin/zdjecia-samochodow/<int:car_id>/', views.admin_car_photos, name='admin_car_photos'),
+    path('admin/samochod/<int:car_id>/', views.admin_car_detail, name='admin_car_detail'),
+    path('car/<int:car_id>/', views.car_detail, name='car_detail'),
+    path('ban-info/', views.user_ban_info, name='user_ban_info'),
+    path('rent-car/<int:car_id>/', views.rent_car, name='rent_car'),
+    path('admin/samochod/<int:car_id>/', views.admin_car_detail, name='admin_car_detail'),
 ]
 

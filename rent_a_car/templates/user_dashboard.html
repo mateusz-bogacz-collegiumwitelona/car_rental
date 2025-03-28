@@ -8,6 +8,63 @@
     {% include "includes/navbar.html" %}
 
     <h2>Zalogowany do panelu użytkownika</h2>
+
+    {% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Dostępne samochody</h1>
+    
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for item in cars %}
+        <div class="col">
+            <div class="card h-100">
+                <!-- Zdjęcie samochodu lub placeholder -->
+                {% if item.photo %}
+                <img src="{{ MEDIA_URL }}{{ item.photo.zdj }}" class="d-block w-100" alt="{{ item.car.marka }} {{ item.car.model }}">
+                {% else %}
+                <div class="card-img-top bg-light text-center py-5">
+                    <i class="fas fa-car fa-4x"></i>
+                </div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <h5 class="card-title">{{ item.car.marka }} {{ item.car.model }}</h5>
+                    <p class="card-text">Rocznik: {{ item.car.rocznik }}</p>
+                    
+                    {% if item.available %}
+                    <span class="badge bg-success">Dostępny</span>
+                    {% else %}
+                    <span class="badge bg-danger">Niedostępny</span>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'car_detail' item.car.id_auta %}" class="btn btn-primary">Szczegóły</a>
+                    
+                    {% if item.available %}
+                    <a href="{% url 'rent_car' item.car.id_auta %}" class="btn btn-success">Wypożycz</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                Brak dostępnych samochodów w bazie.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
     
     {% include "includes/footer.html" %}
 </body>

@@ -2,50 +2,6 @@
 <html lang="pl">
 <head>
     {% include "includes/head.html" %}
-    <style>
-        .sidebar {
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            padding-top: 2rem;
-            background-color: #212529;
-            color: white;
-            width: 250px;
-            z-index: 1000;
-        }
-        .sidebar a {
-            padding: 10px 15px;
-            text-decoration: none;
-            font-size: 16px;
-            color: white;
-            display: block;
-        }
-        .sidebar a:hover {
-            background-color: #343a40;
-        }
-        .content {
-            margin-left: 250px;
-            padding: 20px;
-        }
-        .sidebar-header {
-            padding: 10px 15px;
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-            }
-            .content {
-                margin-left: 0;
-            }
-        }
-    </style>
 </head>
 <body>
     <div class="container-fluid">
@@ -123,6 +79,16 @@
                                     <h5 class="card-title">Zarządzaj czarną listą</h5>
                                     <p class="card-text">Dodawaj i usuwaj użytkowników z czarnej listy.</p>
                                     <a href="{% url 'admin_blackList_view' %}" class="btn btn-primary">Przejdź</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Zarządzaj zdjęciami aut</h5>
+                                    <p class="card-text">Dodawaj i usuwaj zdjęcia aut.</p>
+                                    <a href="{% url 'admin_car_view' %}" class="btn btn-primary">Przejdź</a>
                                 </div>
                             </div>
                         </div>

@@ -40,6 +40,11 @@ COPY --from=builder /usr/local/bin/ /usr/local/bin/
 WORKDIR /app
 COPY --from=builder --chown=appuser:appuser /app /app
 
+# Utworzenie i ustawienie uprawnień dla katalogów mediów
+RUN mkdir -p /app/media/cars && \
+    chmod -R 777 /app/media && \
+    chown -R appuser:appuser /app/media
+
 # Ustawienia środowiska
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1

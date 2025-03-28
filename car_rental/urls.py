@@ -16,8 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from rent_a_car.views import handler404, handler400, handler500
 
 urlpatterns = [
     path('', include('rent_a_car.urls')),
-    path('admin/', admin.site.urls),
+    #path('admin/', admin.site.urls),
 ]
+
+handler404 = 'rent_a_car.views.handler404'
+handler400 = 'rent_a_car.views.handler400'
+handler500 = 'rent_a_car.views.handler500'
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -5,9 +5,8 @@
 #   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
-# W pliku models.py
 from django.db import models
-from django.contrib.auth.hashers import make_password, check_password as django_check
+
 
 class Admin(models.Model):
     id_admin = models.AutoField(primary_key=True)
@@ -15,13 +14,6 @@ class Admin(models.Model):
     nazwisko = models.CharField(max_length=50)
     email = models.CharField(max_length=50)
     password = models.CharField(max_length=255)
-
-    def check_password(self, raw_password):
-        # Używaj importowanej funkcji django_check
-        return django_check(raw_password, self.password)
-
-    def set_password(self, raw_password):
-        self.password = make_password(raw_password)
 
     class Meta:
         managed = False
@@ -39,6 +31,19 @@ class Auta(models.Model):
     class Meta:
         managed = False
         db_table = 'auta'
+
+
+class AutaZdj(models.Model):
+    id_zdj = models.AutoField(primary_key=True)
+    id_auta = models.ForeignKey(Auta, models.DO_NOTHING, db_column='id_auta')
+    zdj = models.CharField(max_length=255)
+    kolejnosc = models.IntegerField(blank=True, null=True)
+    created_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'auta_zdj'
+        ordering = ['kolejnosc']
 
 
 class AuthGroup(models.Model):
@@ -188,13 +193,6 @@ class Uzytkownicy(models.Model):
     email = models.CharField(max_length=50)
     haslo = models.CharField(max_length=100)
     id_zamieszkania = models.ForeignKey(Miasta, models.DO_NOTHING, db_column='id_zamieszkania')
-
-    def check_password(self, raw_password):
-        return check_password(raw_password, self.haslo)
-
-    def set_password(self, raw_password):
-        self.haslo = make_password(raw_password)
-
 
     class Meta:
         managed = False

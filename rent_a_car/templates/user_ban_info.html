@@ -1,0 +1,67 @@
+{%load static%}
+<!DOCTYPE html>
+<html>
+<head>
+    {% include "includes/head.html" %}
+</head>
+<body>
+    {% include "includes/navbar.html" %}
+
+    <h2>Zalogowany do panelu użytkownika</h2>
+
+    {% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h2 class="mb-0">Konto zablokowane</h2>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <p><strong>Twoje konto zostało tymczasowo zablokowane.</strong></p>
+                        <p>Niestety, nie możesz korzystać z usług wypożyczalni w tym momencie.</p>
+                    </div>
+                    
+                    <h3>Szczegóły blokady:</h3>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Powód blokady:</th>
+                            <td>{{ ban.powod }}</td>
+                        </tr>
+                        <tr>
+                            <th>Okres blokady:</th>
+                            <td>Od {{ ban.data_poczatkowa }} do {{ ban.data_koncowa }}</td>
+                        </tr>
+                        <tr>
+                            <th>Dodano przez:</th>
+                            <td>{{ ban.id_admin.imie }} {{ ban.id_admin.nazwisko }}</td>
+                        </tr>
+                    </table>
+                    
+                    <h4 class="mt-4">Co to oznacza?</h4>
+                    <p>Podczas trwania blokady:</p>
+                    <ul>
+                        <li>Nie możesz wypożyczyć żadnych samochodów</li>
+                        <li>Nie możesz dokonywać rezerwacji</li>
+                        <li>Wszelkie aktywne wypożyczenia pozostają w mocy i musisz je zakończyć zgodnie z umową</li>
+                    </ul>
+                    
+                    <h4 class="mt-4">Potrzebujesz wyjaśnień?</h4>
+                    <p>Jeśli masz pytania dotyczące tej blokady lub chcesz się odwołać, skontaktuj się z naszym biurem obsługi klienta.</p>
+                </div>
+                <div class="card-footer">
+                    <p class="text-muted">
+                        Blokada wygaśnie automatycznie {{ ban.data_koncowa }}. Po tym terminie odzyskasz możliwość korzystania z naszych usług.
+                    </p>
+                    <a href="{% url 'logout' %}" class="btn btn-secondary">Wyloguj się</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+    
+    {% include "includes/footer.html" %}
+</body>
+</html>
