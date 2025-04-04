@@ -1,72 +1,54 @@
 import logging
-import os
-import time
-
 from django.contrib import messages
-from django.contrib.auth.hashers import make_password
 from django.shortcuts import render, redirect, get_object_or_404
 from datetime import datetime
-from django.db.models import Q
-from django.conf import settings
-from .forms import (
-    AutaForm, MiastaForm, UzytkownicyForm, WypozyczenieForm,
-    AdminForm, CzarnaListaForm, LoginForm, RegistrationForm
-)
-from .models import Admin, Uzytkownicy, Auta, Miasta, Wypozyczenie, CzarnaLista, AutaZdj
 
+from .forms import (
+    LoginForm, CarForm, CityForm, UserForm,
+    AdminForm, RentForm, BlackListForm, RegistrationForm
+)
+from .models import Auta, AutaZdj
+
+from .services.user_service import UserService
+from .services.car_service import CarService
+from .services.rental_service import RentalService
+from .services.admin_service import AdminService
+from .services.blacklist_service import BlacklistService
 
 logger = logging.getLogger(__name__)
 
+# Funkcje pomocnicze
+def is_admin_logged_in(request):
+    return request.session.get('user_type') == 'admin' and request.session.get('user_id')
+
+def is_user_logged_in(request):
+    return request.session.get('user_type') == 'user' and request.session.get('user_id')
+
+# Widok strony głównej
 def index_view(request):
     return render(request, 'index.html')
 
+# Administracja - Dashboard
 def admin_dashboard(request):
-    if request.session.get('user_type') != 'admin':
+    if not is_admin_logged_in(request):
         return redirect('login')
-
-    print(f"Trying to render template: admin_dashboard.html")
     return render(request, 'admin-dashboard.html')
 
+# Użytkownik - Dashboard
 def user_dashboard(request):
-    """
-    User dashboard view displaying available cars
-    Redirect to ban info if user is blacklisted
-    """
-    if request.session.get('user_type') != 'user':
+    if not is_user_logged_in(request):
         return redirect('login')
     
     user_id = request.session.get('user_id')
-    
-    # Check if user is on blacklist
-    user_ban = CzarnaLista.objects.filter(id_user=user_id, data_koncowa__gte=datetime.now().date()).first()
-    if user_ban:
+
+    if UserService.is_blacklisted(user_id):
         return redirect('user_ban_info')
     
-    # Get all cars with availability information
-    all_cars = Auta.objects.all()
+    cars = CarService.get_all_cars_with_status()
     
-    # For each car, check if it's currently rented and get the first photo
-    cars_with_status = []
-    for car in all_cars:
-        # Check if car is currently rented
-        is_rented = Wypozyczenie.objects.filter(
-            id_auta=car,
-            data_poczatkowa__lte=datetime.now().date(),
-            data_koncowa__gte=datetime.now().date()
-        ).exists()
-        
-        # Get the first photo for this car
-        first_photo = AutaZdj.objects.filter(id_auta=car).order_by('kolejnosc').first()
-        
-        cars_with_status.append({
-            'car': car,
-            'available': not is_rented,
-            'photo': first_photo
-        })
-    
-    return render(request, 'user_dashboard.html', {'cars': cars_with_status})
+    return render(request, 'user_dashboard.html', {'cars': cars})
 
-
+# Logowanie
 def login_view(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
@@ -74,360 +56,203 @@ def login_view(request):
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
             
-            logger.info(f"Próba logowania - email: {email}")
-
-            try:
-                admin = Admin.objects.filter(email=email).first()
-                if admin:
-                    logger.info(f"Znaleziono admina: {admin.imie} {admin.nazwisko}")
-                    logger.info(f"Hasło z bazy: {admin.password}")
-                    logger.info(f"Podane hasło: {password}")
-                    from django.contrib.auth.hashers import check_password
-                    direct_result = check_password(password, admin.password)
-                    logger.info(f"Bezpośrednie sprawdzenie hasła: {direct_result}")
-
-                    try:
-                        model_result = admin.check_password(password)
-                        logger.info(f"Sprawdzenie przez model: {model_result}")
-                    except Exception as e:
-                        logger.error(f"Błąd podczas sprawdzania hasła przez model: {e}")
-                        model_result = False
-                    
-                    if direct_result:
-                        request.session['user_type'] = 'admin'
-                        request.session['user_id'] = admin.id_admin
-                        logger.info("Logowanie udane")
-                        return redirect('admin_dashboard')
-                    else:
-                        logger.warning("Nieprawidłowe hasło")
-                        messages.error(request, 'Nieprawidłowy email lub hasło')
-                else:
-                    user = Uzytkownicy.objects.filter(email=email).first()
-                    if user:
-                        from django.contrib.auth.hashers import check_password
-                        if check_password(password, user.haslo):
-                            request.session['user_type'] = 'user'
-                            request.session['user_id'] = user.id_user
-                            logger.info("Logowanie użytkownika udane")
-                            return redirect('user_dashboard')
-                        else:
-                            logger.warning("Nieprawidłowe hasło użytkownika")
-                            messages.error(request, 'Nieprawidłowy email lub hasło')
-                    else:
-                        logger.warning(f"Nie znaleziono użytkownika z emailem: {email}")
-                        messages.error(request, 'Nieprawidłowy email lub hasło')
-            except Exception as e:
-                logger.error(f"Błąd podczas logowania: {e}")
-                messages.error(request, 'Wystąpił błąd podczas logowania')
+            admin = AdminService.authenticate_admin(email, password)
+            if admin:
+                request.session['user_type'] = 'admin'
+                request.session['user_id'] = admin.id_admin
+                return redirect('admin_dashboard')
+            
+            user = UserService.authenticate_user(email, password)
+            if user:
+                request.session['user_type'] = 'user'
+                request.session['user_id'] = user.id_user
+                return redirect('user_dashboard')
+            
+            messages.error(request, 'Nieprawidłowy email lub hasło')
     else:
         form = LoginForm()
     
     return render(request, 'login.html', {'form': form})
 
-#sprawdzenie sesji admina
-def is_admin_logged_in(requst):
-    return requst.session.get('user_type') == 'admin' and requst.session.get('user_id')
+# Wylogowanie
+def logout_view(request):
+    if 'user_type' in request.session:
+        del request.session['user_type']
+    if 'user_id' in request.session:
+        del request.session['user_id']
+    
+    messages.success(request, 'Zostałeś wylogowany')
+    return redirect('login')
 
-#sprawdzanie sesji user
-def is_user_logged_in(requst):
-    return requst.session.get('user_type') == 'user' and requst.session.get('user_id')
+# Rejestracja
+def register_view(request):
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            user_data = {
+                'imie': form.cleaned_data['imie'],
+                'nazwisko': form.cleaned_data['nazwisko'],
+                'pesel': form.cleaned_data['pesel'],
+                'email': form.cleaned_data['email'],
+                'haslo': form.cleaned_data['haslo']
+            }
+            
+            address_data = {
+                'miasto': form.cleaned_data['miasto'],
+                'ulica': form.cleaned_data['ulica'],
+                'nr_ulicy': form.cleaned_data['nr_ulicy'],
+                'kod_pocztowy': form.cleaned_data['kod_pocztowy']
+            }
 
-#wylogowanie 
-def logout_view(requst):
-    if 'user_type' in requst.session:
-        del requst.session['user_type']
+            UserService.create_user(user_data, address_data)
+            
+            messages.success(request, 'Konto zostało utworzone. Możesz się teraz zalogować.')
+            return redirect('login')
+    else:
+        form = RegistrationForm()
+    
+    return render(request, 'register.html', {'form': form})
 
-    if 'user_id' in requst.session:
-        del requst.session['user_id']
-
-    messages.success('Zostałeś wylogowany')
-
-#Funckje zarządzania autami
+# Administracja - Zarządzanie samochodami
 def admin_car_view(request):
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
         return redirect('login')
     
-    auta = Auta.objects.all()
-    form = AutaForm()
+    cars = CarService.get_all_cars()
+    form = CarForm()
     
     if request.method == 'POST':
         if 'dodaj' in request.POST:
-            form = AutaForm(request.POST)
+            form = CarForm(request.POST)
             if form.is_valid():
-                form.save()
+                car_data = {
+                    'marka': form.cleaned_data['marka'],
+                    'model': form.cleaned_data['model'],
+                    'rocznik': form.cleaned_data['rocznik'],
+                    'opis': form.cleaned_data['opis'],
+                    'osiagi': form.cleaned_data['osiagi']
+                }
+                CarService.create_car(car_data)
                 messages.success(request, 'Auto zostało dodane.')
                 return redirect('admin_car_view')
         elif 'usun' in request.POST:
-            id_auta = request.POST.get('id_auta')
-            auto = get_object_or_404(Auta, id_auta=id_auta)
-            auto.delete()
+            car_id = request.POST.get('id_auta')
+            CarService.delete_car(car_id)
             messages.success(request, 'Auto zostało usunięte.')
             return redirect('admin_car_view')
         elif 'edytuj' in request.POST:
-            id_auta = request.POST.get('id_auta')
-            auto = get_object_or_404(Auta, id_auta=id_auta)
-            form = AutaForm(request.POST, instance=auto)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Auto zostało zaktualizowane.')
-                return redirect('admin_car_view')
+            car_id = request.POST.get('id_auta')
+            car_data = {
+                'marka': form.cleaned_data['marka'],
+                'model': form.cleaned_data['model'],
+                'rocznik': form.cleaned_data['rocznik'],
+                'opis': form.cleaned_data['opis'],
+                'osiagi': form.cleaned_data['osiagi']
+            }
+            CarService.update_car(car_id, car_data)
+            messages.success(request, 'Auto zostało zaktualizowane.')
+            return redirect('admin_car_view')
     
-    return render(request, 'admin_car_view.html', {'auta': auta, 'form': form})
+    return render(request, 'admin_car_view.html', {'auta': cars, 'form': form})
 
-# Funkcje zarządzania adresami zamieszkania
+# Administracja - Zarządzanie adresami
 def admin_address_view(request):
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
         return redirect('login')
     
-    miasta = Miasta.objects.all()
-    form = MiastaForm()
+    addresses = UserService.get_all_addresses()
+    form = CityForm()
     
-    if request.method == 'POST':
-        if 'dodaj' in request.POST:
-            form = MiastaForm(request.POST)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Adres został dodany.')
-                return redirect('admin_address_view')
-        elif 'usun' in request.POST:
-            id_zamieszkania = request.POST.get('id_zamieszkania')
-            miasto = get_object_or_404(Miasta, id_zamieszkania=id_zamieszkania)
-            miasto.delete()
-            messages.success(request, 'Adres został usunięty.')
-            return redirect('admin_address_view')
-        elif 'edytuj' in request.POST:
-            id_zamieszkania = request.POST.get('id_zamieszkania')
-            miasto = get_object_or_404(Miasta, id_zamieszkania=id_zamieszkania)
-            form = MiastaForm(request.POST, instance=miasto)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Adres został zaktualizowany.')
-                return redirect('admin_address_view')
-    
-    return render(request, 'admin_address_view.html', {'miasta': miasta, 'form': form})
+    return render(request, 'admin_address_view.html', {'miasta': addresses, 'form': form})
 
-# Funkcje zarządzania wypożyczeniami
+# Administracja - Zarządzanie wypożyczeniami
 def admin_rent_view(request):
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
         return redirect('login')
     
-    wypozyczenia = Wypozyczenie.objects.all()
-    form = WypozyczenieForm()
+    rentals = RentalService.get_all_rentals()
+    form = RentForm()
     
-    if request.method == 'POST':
-        if 'dodaj' in request.POST:
-            form = WypozyczenieForm(request.POST)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Wypożyczenie zostało dodane.')
-                return redirect('admin_rent_view')
-        elif 'usun' in request.POST:
-            id_wypozyczenia = request.POST.get('id_wypozyczenia')
-            wypozyczenie = get_object_or_404(Wypozyczenie, id_wypozyczenia=id_wypozyczenia)
-            wypozyczenie.delete()
-            messages.success(request, 'Wypożyczenie zostało usunięte.')
-            return redirect('admin_rent_view')
-        elif 'edytuj' in request.POST:
-            id_wypozyczenia = request.POST.get('id_wypozyczenia')
-            wypozyczenie = get_object_or_404(Wypozyczenie, id_wypozyczenia=id_wypozyczenia)
-            form = WypozyczenieForm(request.POST, instance=wypozyczenie)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Wypożyczenie zostało zaktualizowane.')
-                return redirect('admin_rent_view')
-    
-    return render(request, 'admin_rent_view.html', {'wypozyczenia': wypozyczenia, 'form': form})
+    return render(request, 'admin_rent_view.html', {'wypozyczenia': rentals, 'form': form})
 
-# Funkcje zarządzania administratorami
+# Administracja - Zarządzanie administratorami
 def admin_admin_view(request):
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
         return redirect('login')
     
-    administratorzy = Admin.objects.all()
+    admins = AdminService.get_all_admins()
     form = AdminForm()
     
-    if request.method == 'POST':
-        if 'dodaj' in request.POST:
-            form = AdminForm(request.POST)
-            if form.is_valid():
-                admin = form.save(commit=False)
-                admin.password = make_password(form.cleaned_data['password'])
-                admin.save()
-                messages.success(request, 'Administrator został dodany.')
-                return redirect('admin_admin_view')
-        elif 'usun' in request.POST:
-            id_admin = request.POST.get('id_admin')
-            # Nie pozwól usunąć zalogowanego administratora
-            if int(id_admin) == request.session.get('user_id'):
-                messages.error(request, 'Nie możesz usunąć swojego konta!')
-                return redirect('admin_admin_view')
-                
-            admin = get_object_or_404(Admin, id_admin=id_admin)
-            admin.delete()
-            messages.success(request, 'Administrator został usunięty.')
-            return redirect('admin_admin_view')
-        elif 'edytuj' in request.POST:
-            id_admin = request.POST.get('id_admin')
-            admin = get_object_or_404(Admin, id_admin=id_admin)
-            form = AdminForm(request.POST, instance=admin)
-            if form.is_valid():
-                admin = form.save(commit=False)
-                if form.cleaned_data.get('password'):
-                    admin.password = make_password(form.cleaned_data['password'])
-                admin.save()
-                messages.success(request, 'Administrator został zaktualizowany.')
-                return redirect('admin_admin_view')
-    
-    return render(request, 'admin_admin_view.html', {'administratorzy': administratorzy, 'form': form})
+    return render(request, 'admin_admin_view.html', {'administratorzy': admins, 'form': form})
 
-# Funkcje zarządzania użytkownikami
+# Administracja - Zarządzanie użytkownikami
 def admin_user_view(request):
-    uzytkownicy = Uzytkownicy.objects.all()
-    print(f"Liczba użytkowników: {uzytkownicy.count()}")
-    for user in uzytkownicy:
-        print(f"ID: {user.id_user}, Imię: {user.imie}, Nazwisko: {user.nazwisko}")
-    
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
         return redirect('login')
     
-    uzytkownicy = Uzytkownicy.objects.all()
-    form = UzytkownicyForm()
+    users = UserService.get_all_users()
+    form = UserForm()
     
-    if request.method == 'POST':
-        if 'dodaj' in request.POST:
-            form = UzytkownicyForm(request.POST)
-            if form.is_valid():
-                uzytkownik = form.save(commit=False)
-                uzytkownik.haslo = make_password(form.cleaned_data['haslo'])
-                uzytkownik.save()
-                messages.success(request, 'Użytkownik został dodany.')
-                return redirect('admin_user_view')
-        elif 'usun' in request.POST:
-            id_user = request.POST.get('id_user')
-            uzytkownik = get_object_or_404(Uzytkownicy, id_user=id_user)
-            uzytkownik.delete()
-            messages.success(request, 'Użytkownik został usunięty.')
-            return redirect('admin_user_view')
-        elif 'edytuj' in request.POST:
-            id_user = request.POST.get('id_user')
-            uzytkownik = get_object_or_404(Uzytkownicy, id_user=id_user)
-            form = UzytkownicyForm(request.POST, instance=uzytkownik)
-            if form.is_valid():
-                uzytkownik = form.save(commit=False)
-                if form.cleaned_data.get('haslo'):
-                    uzytkownik.haslo = make_password(form.cleaned_data['haslo'])
-                uzytkownik.save()
-                messages.success(request, 'Użytkownik został zaktualizowany.')
-                return redirect('admin_user_view')
-    
-    return render(request, 'admin_user_view.html', {'uzytkownicy': uzytkownicy, 'form': form})
+    return render(request, 'admin_user_view.html', {'uzytkownicy': users, 'form': form})
 
-# Funkcje zarządzania czarną listą
+# Administracja - Zarządzanie czarną listą
 def admin_blackList_view(request):
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
         return redirect('login')
     
-    czarna_lista = CzarnaLista.objects.all()
-    form = CzarnaListaForm()
-    
-    # Automatycznie ustaw aktualnego administratora jako dodającego
+    blacklist = BlacklistService.get_all_blacklist()
+    form = BlackListForm()
+
     if request.method == 'GET':
-        try:
-            admin_id = request.session.get('user_id')
-            admin = Admin.objects.get(id_admin=admin_id)
-            form = CzarnaListaForm(initial={'id_admin': admin})
-        except Admin.DoesNotExist:
-            pass
+        admin_id = request.session.get('user_id')
+        admin = AdminService.get_admin_by_id(admin_id)
+        if admin:
+            form = BlackListForm(initial={'id_admin': admin})
     
-    if request.method == 'POST':
-        if 'dodaj' in request.POST:
-            form = CzarnaListaForm(request.POST)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Użytkownik został dodany do czarnej listy.')
-                return redirect('admin_blackList_view')
-        elif 'usun' in request.POST:
-            id_bl = request.POST.get('id_bl')
-            wpis = get_object_or_404(CzarnaLista, id_bl=id_bl)
-            wpis.delete()
-            messages.success(request, 'Wpis został usunięty z czarnej listy.')
-            return redirect('admin_blackList_view')
-        elif 'edytuj' in request.POST:
-            id_bl = request.POST.get('id_bl')
-            wpis = get_object_or_404(CzarnaLista, id_bl=id_bl)
-            form = CzarnaListaForm(request.POST, instance=wpis)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Wpis czarnej listy został zaktualizowany.')
-                return redirect('admin_blackList_view')
-    
-    return render(request, 'admin_blackList_view.html', {'czarna_lista': czarna_lista, 'form': form})
+    return render(request, 'admin_blackList_view.html', {'czarna_lista': blacklist, 'form': form})
 
 def car_detail(request, car_id):
-    """
-    Detailed view for a specific car
-    """
-    if request.session.get('user_type') != 'user':
+    if not is_user_logged_in(request):
         return redirect('login')
     
     user_id = request.session.get('user_id')
-    
-    # Check if user is on blacklist
-    user_ban = CzarnaLista.objects.filter(id_user=user_id, data_koncowa__gte=datetime.now().date()).first()
-    if user_ban:
+
+    if UserService.is_blacklisted(user_id):
         return redirect('user_ban_info')
-    
-    car = get_object_or_404(Auta, id_auta=car_id)
-    
-    # Get all photos for this car
-    car_photos = AutaZdj.objects.filter(id_auta=car).order_by('kolejnosc')
-    
-    # Check if car is currently rented
-    is_rented = Wypozyczenie.objects.filter(
-        id_auta=car,
-        data_poczatkowa__lte=datetime.now().date(),
-        data_koncowa__gte=datetime.now().date()
-    ).exists()
-    
-    # Get rental history for this car
-    rental_history = Wypozyczenie.objects.filter(
-        id_auta=car
-    ).order_by('-data_poczatkowa')
+
+    car_details = CarService.get_car_details(car_id)
+    if not car_details:
+        messages.error(request, 'Nie znaleziono auta.')
+        return redirect('user_dashboard')
     
     context = {
-        'car': car,
-        'car_photos': car_photos,
-        'available': not is_rented,
-        'rental_history': rental_history,
+        'car': car_details['car'],
+        'car_photos': car_details['photos'],
+        'available': car_details['available'],
+        'rental_history': car_details['rental_history'],
         'today': datetime.now().date()
     }
     
     return render(request, 'car_detail.html', context)
 
+# Informacja o banie użytkownika
 def user_ban_info(request):
-    """
-    View for displaying ban information
-    """
-    if request.session.get('user_type') != 'user':
+    if not is_user_logged_in(request):
         return redirect('login')
     
     user_id = request.session.get('user_id')
-    user = get_object_or_404(Uzytkownicy, id_user=user_id)
+    user = UserService.get_user_by_id(user_id)
     
-    # Get active bans for this user
-    active_ban = CzarnaLista.objects.filter(
-        id_user=user_id,
-        data_koncowa__gte=datetime.now().date()
-    ).first()
+    # Pobierz aktywny ban
+    active_ban = UserService.get_active_ban(user_id)
     
     if not active_ban:
-        # If no active ban, redirect to dashboard
         return redirect('user_dashboard')
     
     context = {
@@ -437,44 +262,46 @@ def user_ban_info(request):
     
     return render(request, 'user_ban_info.html', context)
 
+# Wypożyczenie auta
 def rent_car(request, car_id):
-    if request.session.get('user_type') != 'user':
+    if not is_user_logged_in(request):
         return redirect('login')
     
     user_id = request.session.get('user_id')
     
-    user_ban = CzarnaLista.objects.filter(id_user=user_id, data_koncowa__gte=datetime.now().date()).first()
-    if user_ban:
+    if UserService.is_blacklisted(user_id):
         return redirect('user_ban_info')
+
+    car = CarService.get_car_by_id(car_id)
+    if not car:
+        messages.error(request, 'Nie znaleziono auta.')
+        return redirect('user_dashboard')
     
-    car = get_object_or_404(Auta, id_auta=car_id)
-    
-    is_rented = Wypozyczenie.objects.filter(
-        id_auta=car,
-        data_poczatkowa__lte=datetime.now().date(),
-        data_koncowa__gte=datetime.now().date()
-    ).exists()
-    
-    if is_rented:
+    if not CarService.is_car_available(car_id):
         messages.error(request, 'To auto jest obecnie niedostępne.')
         return redirect('car_detail', car_id=car_id)
     
     if request.method == 'POST':
-        form = WypozyczenieForm(request.POST)
+        form = RentForm(request.POST)
         if form.is_valid():
-            rental = form.save(commit=False)
-            rental.id_auta = car
-            rental.id_user_id = user_id 
-            rental.save()
-            messages.success(request, 'Auto zostało wypożyczone.')
-            return redirect('user_dashboard')
+            rental_data = {
+                'data_poczatkowa': form.cleaned_data['data_poczatkowa'],
+                'data_koncowa': form.cleaned_data['data_koncowa'],
+                'id_auta_id': car_id,
+                'id_user_id': user_id
+            }
+            
+            rental, error = RentalService.create_rental(rental_data)
+            if rental:
+                messages.success(request, 'Auto zostało wypożyczone.')
+                return redirect('user_dashboard')
+            else:
+                messages.error(request, error or 'Nie udało się wypożyczyć auta.')
     else:
         initial_data = {
-            'id_auta': car,
-            'id_user': user_id,
             'data_poczatkowa': datetime.now().date()
         }
-        form = WypozyczenieForm(initial=initial_data)
+        form = RentForm(initial=initial_data)
     
     context = {
         'car': car,
@@ -483,40 +310,38 @@ def rent_car(request, car_id):
     
     return render(request, 'rent_car.html', context)
 
+# Administracja - Zarządzanie zdjęciami samochodów
 def admin_car_photos(request, car_id):
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
         return redirect('login')
     
-    car = get_object_or_404(Auta, id_auta=car_id)
-    photos = AutaZdj.objects.filter(id_auta=car).order_by('kolejnosc')
+    car = CarService.get_car_by_id(car_id)
+    if not car:
+        messages.error(request, 'Nie znaleziono auta.')
+        return redirect('admin_car_view')
     
-    # Pobierz listę dostępnych zdjęć z katalogu
-    available_images = []
-    cars_dir = os.path.join(settings.MEDIA_ROOT, 'cars')
-    if os.path.exists(cars_dir):
-        available_images = [f for f in os.listdir(cars_dir) if os.path.isfile(os.path.join(cars_dir, f))]
+    photos = CarService.get_car_photos(car_id)
+    available_images = CarService.get_available_images()
     
     if request.method == 'POST':
         if 'add_photo' in request.POST:
             selected_image = request.POST.get('selected_image')
             if selected_image:
-                # Sprawdź limit zdjęć
-                if photos.count() >= 5:
+                if len(photos) >= 5:
                     messages.error(request, 'Maksymalna liczba zdjęć dla jednego auta to 5.')
                 else:
-                    # Dodaj nowe zdjęcie do bazy z wybranym plikiem
-                    new_photo = AutaZdj(
-                        id_auta=car,
-                        zdj=f'cars/{selected_image}',  # Ścieżka względna
-                        kolejnosc=photos.count() + 1 if photos else 1,
-                        created_at=datetime.now()
-                    )
-                    new_photo.save()
+                    photo_data = {
+                        'id_auta_id': car_id,
+                        'zdj': f'cars/{selected_image}',
+                        'kolejnosc': len(photos) + 1,
+                        'created_at': datetime.now()
+                    }
+                    CarService.add_car_photo(photo_data)
                     messages.success(request, 'Zdjęcie zostało dodane.')
+                    return redirect('admin_car_photos', car_id=car_id)
             else:
                 messages.error(request, 'Nie wybrano zdjęcia.')
-        # reszta kodu funkcji pozostaje bez zmian
     
     context = {
         'car': car,
@@ -526,68 +351,54 @@ def admin_car_photos(request, car_id):
     
     return render(request, 'admin_car_photos.html', context)
 
+# Administracja - Szczegóły auta
 def admin_car_detail(request, car_id):
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
         return redirect('login')
     
-    car = get_object_or_404(Auta, id_auta=car_id)
-    photos = AutaZdj.objects.filter(id_auta=car).order_by('kolejnosc')
+    car = CarService.get_car_by_id(car_id)
+    if not car:
+        messages.error(request, 'Nie znaleziono auta.')
+        return redirect('admin_car_view')
     
-    # Obsługa dodawania/usuwania zdjęć
+    photos = CarService.get_car_photos(car_id)
+    
     if request.method == 'POST':
-        if 'add_photo' in request.POST:
-            if 'photo' in request.FILES:
-                # Sprawdź limit zdjęć
-                if photos.count() >= 5:
-                    messages.error(request, 'Maksymalna liczba zdjęć dla jednego auta to 5.')
-                else:
-                    # Dodaj nowe zdjęcie
-                    new_photo = AutaZdj(
-                        id_auta=car,
-                        zdj=request.FILES['photo'],
-                        kolejnosc=photos.count() + 1 if photos else 1
-                    )
-                    new_photo.save()
-                    messages.success(request, 'Zdjęcie zostało dodane.')
-            else:
-                messages.error(request, 'Nie wybrano pliku.')
-                
+        if 'add_photo' in request.POST and 'photo' in request.FILES:
+            pass
         elif 'delete_photo' in request.POST:
             photo_id = request.POST.get('photo_id')
-            photo = get_object_or_404(AutaZdj, id_zdj=photo_id, id_auta=car)
-            photo.delete()
-            
-            # Aktualizacja kolejności pozostałych zdjęć
-            remaining_photos = AutaZdj.objects.filter(id_auta=car).order_by('kolejnosc')
-            for i, p in enumerate(remaining_photos, 1):
-                p.kolejnosc = i
-                p.save()
-                
+            CarService.delete_car_photo(photo_id)
             messages.success(request, 'Zdjęcie zostało usunięte.')
-        
-        # Odświeżamy listę zdjęć po operacjach
-        photos = AutaZdj.objects.filter(id_auta=car).order_by('kolejnosc')
-    
-    # Dla formularza edycji auta
-    if request.method == 'POST' and 'edit_car' in request.POST:
-        form = AutaForm(request.POST, instance=car)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Auto zostało zaktualizowane.')
+            return redirect('admin_car_detail', car_id=car_id)
+        elif 'edit_car' in request.POST:
+            form = CarForm(request.POST)
+            if form.is_valid():
+                car_data = {
+                    'marka': form.cleaned_data['marka'],
+                    'model': form.cleaned_data['model'],
+                    'rocznik': form.cleaned_data['rocznik'],
+                    'opis': form.cleaned_data['opis'],
+                    'osiagi': form.cleaned_data['osiagi']
+                }
+                CarService.update_car(car_id, car_data)
+                messages.success(request, 'Auto zostało zaktualizowane.')
+                return redirect('admin_car_detail', car_id=car_id)
     else:
-        form = AutaForm(instance=car)
+        form = CarForm(instance=car)
     
     context = {
         'car': car,
         'photos': photos,
         'form': form,
-        'active_tab': request.GET.get('tab', 'info')  # Domyślnie aktywna zakładka 'info'
+        'active_tab': request.GET.get('tab', 'info')
     }
     
     return render(request, 'admin_car_detail.html', context)
 
-def handler404(request,exeption):
+# Obsługa błędów
+def handler404(request, exception):
     return render(request, '404.html', status=404)
 
 def handler400(request, exception):
@@ -595,28 +406,3 @@ def handler400(request, exception):
 
 def handler500(request):
     return render(request, '500.html', status=500)
-
-def register_view(request):
-    if request.method == 'POST':
-        form = RegistrationForm(request.POST)
-        if form.is_valid():
-            # Najpierw tworzymy adres
-            adres = Miasta.objects.create(
-                miasto=form.cleaned_data['miasto'],
-                ulica=form.cleaned_data['ulica'],
-                nr_ulicy=form.cleaned_data['nr_ulicy'],
-                kod_pocztowy=form.cleaned_data['kod_pocztowy']
-            )
-            
-            # Teraz tworzymy użytkownika powiązanego z adresem
-            user = form.save(commit=False)
-            user.haslo = make_password(form.cleaned_data['haslo'])
-            user.id_zamieszkania = adres  # Przypisujemy utworzony adres
-            user.save()
-            
-            messages.success(request, 'Konto zostało utworzone. Możesz się teraz zalogować.')
-            return redirect('login')
-    else:
-        form = RegistrationForm()
-    
-    return render(request, 'register.html', {'form': form})

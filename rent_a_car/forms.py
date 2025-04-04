@@ -18,7 +18,7 @@ class LoginForm(forms.Form):
     )
 
 #formularz auta
-class AutaForm(forms.ModelForm):
+class CarForm(forms.ModelForm):
     class Meta:
         model = Auta
         fields = ['marka', 'model', 'rocznik', 'opis', 'osiagi']
@@ -41,7 +41,7 @@ class AutaForm(forms.ModelForm):
 
 
 #folmularz miasta
-class MiastaForm(forms.ModelForm):
+class CityForm(forms.ModelForm):
     class Meta:
         model = Miasta
         fields = ['miasto', 'ulica', 'nr_ulicy', 'kod_pocztowy']
@@ -61,14 +61,14 @@ class MiastaForm(forms.ModelForm):
         }
 
 #folmularz urzytkowicy
-class UzytkownicyForm(forms.ModelForm):
-    haslo = forms.CharField(
+class UserForm(forms.ModelForm):
+    password = forms.CharField(
         label='Hasło',
         widget=forms.PasswordInput(attrs={'class': 'form_control'}),
         required=False
     )
 
-    potwierdzenie_hasla = forms.CharField(
+    check_password = forms.CharField(
         label='Potwierdź Hasło',
         widget=forms.PasswordInput(attrs={'class': 'form_control'}),
         required=False
@@ -95,10 +95,10 @@ class UzytkownicyForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        haslo = cleaned_data.get('haslo')
-        potwierdzenie_hasla = cleaned_data.get('potwierdzenie_hasla')
+        passwrod = cleaned_data.get('haslo')
+        check_password = cleaned_data.get('potwierdzenie_hasla')
 
-        if haslo and haslo != potwierdzenie_hasla:
+        if passwrod and passwrod != check_password:
             raise forms.ValidationError("Hasła nie są idętyczne")
         
         return cleaned_data
@@ -110,7 +110,7 @@ class AdminForm(forms.ModelForm):
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         required=False
     )
-    potwierdzenie_hasla = forms.CharField(
+    check_password = forms.CharField(
         label='Potwierdź hasło', 
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         required=False
@@ -133,15 +133,15 @@ class AdminForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get('password')
-        potwierdzenie_hasla = cleaned_data.get('potwierdzenie_hasla')
+        check_password = cleaned_data.get('potwierdzenie_hasla')
 
-        if password and password != potwierdzenie_hasla:
+        if password and password != check_password:
             raise forms.ValidationError("Hasła nie są identyczne.")
         
         return cleaned_data
 
 #formularz wypożyczenia
-class WypozyczenieForm(forms.ModelForm):
+class RentForm(forms.ModelForm):
     class Meta:
         model = Wypozyczenie
         fields = ['data_poczatkowa', 'data_koncowa', 'id_auta', 'id_user']
@@ -160,16 +160,16 @@ class WypozyczenieForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        data_poczatkowa = cleaned_data.get('data_poczatkowa')
-        data_koncowa = cleaned_data.get('data_koncowa')
+        start_data = cleaned_data.get('data_poczatkowa')
+        end_data = cleaned_data.get('data_koncowa')
 
-        if data_poczatkowa and data_koncowa and data_poczatkowa > data_koncowa:
+        if start_data and end_data and start_data > end_data:
             raise forms.ValidationError("Data początkowa nie może być późniejsza niż data końcowa.")
         
         return cleaned_data
 
 #formalrz czarnej listy
-class CzarnaListaForm(forms.ModelForm):
+class BlackListForm(forms.ModelForm):
     class Meta:
         model = CzarnaLista
         fields = ['id_user', 'powod', 'data_poczatkowa', 'data_koncowa', 'id_admin']
@@ -190,10 +190,10 @@ class CzarnaListaForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        data_poczatkowa = cleaned_data.get('data_poczatkowa')
-        data_koncowa = cleaned_data.get('data_koncowa')
+        start_data = cleaned_data.get('data_poczatkowa')
+        end_data = cleaned_data.get('data_koncowa')
 
-        if data_poczatkowa and data_koncowa and data_poczatkowa > data_koncowa:
+        if start_data and end_data and start_data > end_data:
             raise forms.ValidationError("Data początkowa nie może być późniejsza niż data końcowa.")
         
         return cleaned_data
@@ -201,35 +201,35 @@ class CzarnaListaForm(forms.ModelForm):
 
 class RegistrationForm(forms.ModelForm):
     # Pola użytkownika
-    haslo = forms.CharField(
+    password = forms.CharField(
         label='Hasło',
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         required=True
     )
 
-    potwierdzenie_hasla = forms.CharField(
+    check_passowrd = forms.CharField(
         label='Potwierdź Hasło',
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         required=True
     )
 
     # Pola adresowe
-    miasto = forms.CharField(
+    city = forms.CharField(
         label='Miasto',
         widget=forms.TextInput(attrs={'class': 'form-control'}),
         required=True
     )
-    ulica = forms.CharField(
+    street = forms.CharField(
         label='Ulica',
         widget=forms.TextInput(attrs={'class': 'form-control'}),
         required=True
     )
-    nr_ulicy = forms.CharField(
+    street_numb = forms.CharField(
         label='Numer ulicy',
         widget=forms.TextInput(attrs={'class': 'form-control'}),
         required=True
     )
-    kod_pocztowy = forms.CharField(
+    zip_code = forms.CharField(
         label='Kod pocztowy',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '00-000'}),
         required=True
@@ -254,10 +254,10 @@ class RegistrationForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        haslo = cleaned_data.get('haslo')
-        potwierdzenie_hasla = cleaned_data.get('potwierdzenie_hasla')
+        password = cleaned_data.get('haslo')
+        check_password = cleaned_data.get('potwierdzenie_hasla')
 
-        if haslo and haslo != potwierdzenie_hasla:
+        if password and password != check_password:
             raise forms.ValidationError("Hasła nie są identyczne")
         
         return cleaned_data
@@ -269,9 +269,9 @@ class RegistrationForm(forms.ModelForm):
         return email
     
     def clean_kod_pocztowy(self):
-        kod = self.cleaned_data.get('kod_pocztowy')
+        zip_code = self.cleaned_data.get('kod_pocztowy')
         # Sprawdź, czy kod pocztowy jest w formacie XX-XXX
         import re
-        if not re.match(r'^\d{2}-\d{3}$', kod):
+        if not re.match(r'^\d{2}-\d{3}$', zip_code):
             raise forms.ValidationError("Kod pocztowy powinien być w formacie XX-XXX")
-        return kod
+        return zip_code

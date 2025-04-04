@@ -32,7 +32,8 @@ services:
       DATABASE_PORT: ${DATABASE_PORT}
     volumes:
       - ./media:/app/media
-      - ./staticfiles:/app/staticfiles
+      - ./staticfiles:/app/staticfiles:ro
+      - ./rent_a_car/static:/app/rent_a_car/static
     env_file:
       - .env
 
