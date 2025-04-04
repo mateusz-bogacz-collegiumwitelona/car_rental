@@ -1,4 +1,5 @@
 from ..models import Admin
+from ..repositories.admin_repository import AdminRepository
 
 class AdminRepository:
     @staticmethod
@@ -28,3 +29,7 @@ class AdminRepository:
     def delete_admin(admin_id):
         admin = Admin.objects.get(id_admin=admin_id)
         admin.delete()
+
+    @staticmethod 
+    def get_admin_by_id(admin_id):
+        return AdminRepository.get_by_id(admin_id)

@@ -49,3 +49,7 @@ class CarService:
         
         photo_data['id_auta'] = car
         return CarRepository.add_car_photo(photo_data)
+    
+    @staticmethod
+    def get_all_cars():
+        return CarRepository.get_all_cars()

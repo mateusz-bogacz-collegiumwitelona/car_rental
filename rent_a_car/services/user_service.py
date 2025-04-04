@@ -1,6 +1,7 @@
 from django.contrib.auth.hashers import make_password, check_password
 from ..repositories.user_repository import UserRepository
 from ..repositories.blacklist_repository import BlacklistRepository
+from ..models import Miasta
 
 class UserService:
     @staticmethod
@@ -51,3 +52,7 @@ class UserService:
     @staticmethod
     def get_all_users():
         return list(UserRepository.get_all_users())
+    
+    @staticmethod
+    def get_all_addresses():
+        return Miasta.objects.all()
