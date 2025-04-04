@@ -10,7 +10,7 @@ from django.db.models import Q
 from django.conf import settings
 from .forms import (
     AutaForm, MiastaForm, UzytkownicyForm, WypozyczenieForm,
-    AdminForm, CzarnaListaForm, LoginForm
+    AdminForm, CzarnaListaForm, LoginForm, RegistrationForm
 )
 from .models import Admin, Uzytkownicy, Auta, Miasta, Wypozyczenie, CzarnaLista, AutaZdj
 
@@ -595,3 +595,28 @@ def handler400(request, exception):
 
 def handler500(request):
     return render(request, '500.html', status=500)
+
+def register_view(request):
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            # Najpierw tworzymy adres
+            adres = Miasta.objects.create(
+                miasto=form.cleaned_data['miasto'],
+                ulica=form.cleaned_data['ulica'],
+                nr_ulicy=form.cleaned_data['nr_ulicy'],
+                kod_pocztowy=form.cleaned_data['kod_pocztowy']
+            )
+            
+            # Teraz tworzymy użytkownika powiązanego z adresem
+            user = form.save(commit=False)
+            user.haslo = make_password(form.cleaned_data['haslo'])
+            user.id_zamieszkania = adres  # Przypisujemy utworzony adres
+            user.save()
+            
+            messages.success(request, 'Konto zostało utworzone. Możesz się teraz zalogować.')
+            return redirect('login')
+    else:
+        form = RegistrationForm()
+    
+    return render(request, 'register.html', {'form': form})

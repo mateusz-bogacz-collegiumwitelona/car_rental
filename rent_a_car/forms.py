@@ -197,3 +197,81 @@ class CzarnaListaForm(forms.ModelForm):
             raise forms.ValidationError("Data początkowa nie może być późniejsza niż data końcowa.")
         
         return cleaned_data
+    
+
+class RegistrationForm(forms.ModelForm):
+    # Pola użytkownika
+    haslo = forms.CharField(
+        label='Hasło',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        required=True
+    )
+
+    potwierdzenie_hasla = forms.CharField(
+        label='Potwierdź Hasło',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        required=True
+    )
+
+    # Pola adresowe
+    miasto = forms.CharField(
+        label='Miasto',
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        required=True
+    )
+    ulica = forms.CharField(
+        label='Ulica',
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        required=True
+    )
+    nr_ulicy = forms.CharField(
+        label='Numer ulicy',
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        required=True
+    )
+    kod_pocztowy = forms.CharField(
+        label='Kod pocztowy',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '00-000'}),
+        required=True
+    )
+
+    class Meta:
+        model = Uzytkownicy
+        fields = ['imie', 'nazwisko', 'pesel', 'email']
+        widgets = {
+            'imie': forms.TextInput(attrs={'class': 'form-control'}),
+            'nazwisko': forms.TextInput(attrs={'class': 'form-control'}),
+            'pesel': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+        }
+
+        labels = {
+            'imie': 'Imię',
+            'nazwisko': 'Nazwisko',
+            'pesel': 'PESEL',
+            'email': 'Email',
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        haslo = cleaned_data.get('haslo')
+        potwierdzenie_hasla = cleaned_data.get('potwierdzenie_hasla')
+
+        if haslo and haslo != potwierdzenie_hasla:
+            raise forms.ValidationError("Hasła nie są identyczne")
+        
+        return cleaned_data
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if Uzytkownicy.objects.filter(email=email).exists():
+            raise forms.ValidationError("Ten adres email jest już używany")
+        return email
+    
+    def clean_kod_pocztowy(self):
+        kod = self.cleaned_data.get('kod_pocztowy')
+        # Sprawdź, czy kod pocztowy jest w formacie XX-XXX
+        import re
+        if not re.match(r'^\d{2}-\d{3}$', kod):
+            raise forms.ValidationError("Kod pocztowy powinien być w formacie XX-XXX")
+        return kod
