@@ -125,7 +125,7 @@ def admin_car_view(request):
     if request.method == 'POST':
         if 'dodaj' in request.POST:
             form = CarForm(request.POST)
-            if form.is_valid():
+            if form.is_valid():  # Upewnij się, że to jest wykonane przed dostępem do cleaned_data
                 car_data = {
                     'marka': form.cleaned_data['marka'],
                     'model': form.cleaned_data['model'],
@@ -143,16 +143,18 @@ def admin_car_view(request):
             return redirect('admin_car_view')
         elif 'edytuj' in request.POST:
             car_id = request.POST.get('id_auta')
-            car_data = {
-                'marka': form.cleaned_data['marka'],
-                'model': form.cleaned_data['model'],
-                'rocznik': form.cleaned_data['rocznik'],
-                'opis': form.cleaned_data['opis'],
-                'osiagi': form.cleaned_data['osiagi']
-            }
-            CarService.update_car(car_id, car_data)
-            messages.success(request, 'Auto zostało zaktualizowane.')
-            return redirect('admin_car_view')
+            form = CarForm(request.POST)
+            if form.is_valid():  # Tu również potrzebna jest ta linia
+                car_data = {
+                    'marka': form.cleaned_data['marka'],
+                    'model': form.cleaned_data['model'],
+                    'rocznik': form.cleaned_data['rocznik'],
+                    'opis': form.cleaned_data['opis'],
+                    'osiagi': form.cleaned_data['osiagi']
+                }
+                CarService.update_car(car_id, car_data)
+                messages.success(request, 'Auto zostało zaktualizowane.')
+                return redirect('admin_car_view')
     
     return render(request, 'admin_car_view.html', {'auta': cars, 'form': form})
 
@@ -337,7 +339,7 @@ def admin_car_photos(request, car_id):
                         'kolejnosc': len(photos) + 1,
                         'created_at': datetime.now()
                     }
-                    CarService.add_car_photo(photo_data)
+                    CarService.add_car_photo(car_id, photo_data)
                     messages.success(request, 'Zdjęcie zostało dodane.')
                     return redirect('admin_car_photos', car_id=car_id)
             else:

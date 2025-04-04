@@ -3,6 +3,11 @@ from ..repositories.admin_repository import AdminRepository
 
 class AdminService:
     @staticmethod
+    def get_admin_by_id(admin_id):
+        return AdminRepository.get_by_id(admin_id)
+
+
+    @staticmethod
     def authenticate_admin(email, password):
         admin = AdminRepository.get_by_email(email)
         

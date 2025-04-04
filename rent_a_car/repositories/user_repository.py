@@ -32,5 +32,5 @@ class UserRepository:
         user.delete()
 
     @staticmethod
-    def fet_all_users():
+    def get_all_users(): 
         return Uzytkownicy.objects.all()

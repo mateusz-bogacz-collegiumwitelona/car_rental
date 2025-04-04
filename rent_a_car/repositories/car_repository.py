@@ -21,7 +21,7 @@ class CarRepository:
         return car
     
     @staticmethod 
-    def get_car_photo(car_id):
+    def get_car_photos(car_id):
         return AutaZdj.objects.filter(id_auta=car_id).order_by('kolejnosc')
     
     @staticmethod
@@ -29,3 +29,15 @@ class CarRepository:
         photo = AutaZdj(**photo_data)
         photo.save()
         return photo
+    
+    @staticmethod
+    def delete_car_photo(photo_id):
+        photo = AutaZdj.objects.get(id_zdj=photo_id)
+        photo.delete()
+        return True
+    
+    @staticmethod
+    def delete_car(car_id):
+        car = Auta.objects.get(id_auta=car_id)
+        car.delete()
+        return car
