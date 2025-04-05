@@ -19,6 +19,9 @@ class Admin(models.Model):
         managed = False
         db_table = 'admin'
 
+    def __str__(self):
+        return f"{self.imie} {self.nazwisko}"
+
 
 class Auta(models.Model):
     id_auta = models.AutoField(primary_key=True)
@@ -32,6 +35,8 @@ class Auta(models.Model):
         managed = False
         db_table = 'auta'
 
+    def __str__(self):
+        return f"{self.marka} {self.model}"
 
 class AutaZdj(models.Model):
     id_zdj = models.AutoField(primary_key=True)
@@ -183,6 +188,9 @@ class Miasta(models.Model):
     class Meta:
         managed = False
         db_table = 'miasta'
+    
+    def __str__(self):
+        return f"{self.miasto} {self.ulica} {self.nr_ulicy}"
 
 
 class Uzytkownicy(models.Model):
@@ -197,6 +205,9 @@ class Uzytkownicy(models.Model):
     class Meta:
         managed = False
         db_table = 'uzytkownicy'
+    
+    def __str__(self):
+        return f"{self.imie} {self.nazwisko}"
 
 
 class Wypozyczenie(models.Model):
