@@ -1,2 +1,1 @@
-nie działanie edycji, dodawania i usuwania w Zarządzanie czarną listą, Zarządzanie administratorami, Zarządzanie wypożyczeniami, Zarządzanie adresami zamieszkania 
-(działa tylko w Zarządzanie flotą samochodową)
+nie da się dodać nowego administaora, nowego użytkownika

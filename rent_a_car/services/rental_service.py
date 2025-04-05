@@ -24,4 +24,14 @@ class RentalService:
     def get_all_rentals():
         return RentalRepository.get_all_rentals()
     
-    
+    @staticmethod
+    def delete_rental(rental_id):
+        return RentalRepository.delete_rental(rental_id)
+
+    @staticmethod
+    def update_rental(rental_id, rental_data):
+        return RentalRepository.update_rental(rental_id, rental_data)
+
+    @staticmethod
+    def get_rental_by_id(rental_id):
+        return RentalRepository.get_rental_by_id(rental_id)

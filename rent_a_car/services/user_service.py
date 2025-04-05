@@ -56,3 +56,21 @@ class UserService:
     @staticmethod
     def get_all_addresses():
         return Miasta.objects.all()
+    
+    @staticmethod
+    def get_user_by_id(uesr_id):
+        return UserRepository.get_by_id(user_id)
+    
+    @staticmethod
+    def create_address(address_data):
+        return UserRepository.create_address(address_data)
+    
+    @staticmethod
+    def delete_address(address_id):
+        return UserRepository.delete_addresses(address_id)
+    
+    @staticmethod
+    def update_address(address_id, address_data):
+        return UserRepository.update_address(address_id, address_data)
+    
+    

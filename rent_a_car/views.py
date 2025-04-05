@@ -167,6 +167,38 @@ def admin_address_view(request):
     addresses = UserService.get_all_addresses()
     form = CityForm()
     
+    if request.method == 'POST':
+        if 'dodaj' in request.POST:
+            form = CityForm(request.POST)
+            if form.is_valid():
+                address_data = {
+                    'miasto': form.cleaned_data['miasto'],
+                    'ulica': form.cleaned_data['ulica'],
+                    'nr_ulicy': form.cleaned_data['nr_ulicy'],
+                    'kod_pocztowy': form.cleaned_data['kod_pocztowy']
+                }
+                UserService.create_address(address_data)
+                messages.success(request, 'Adres został dodany.')
+                return redirect('admin_address_view')
+        elif 'usun' in request.POST:
+            address_id = request.POST.get('id_zamieszkania')
+            UserService.delete_address(address_id)
+            messages.success(request, 'Adres został usunięty.')
+            return redirect('admin_address_view')
+        elif 'edytuj' in request.POST:
+            address_id = request.POST.get('id_zamieszkania')
+            form = CityForm(request.POST)
+            if form.is_valid():
+                address_data = {
+                    'miasto': form.cleaned_data['miasto'],
+                    'ulica': form.cleaned_data['ulica'],
+                    'nr_ulicy': form.cleaned_data['nr_ulicy'],
+                    'kod_pocztowy': form.cleaned_data['kod_pocztowy']
+                }
+                UserService.update_address(address_id, address_data)
+                messages.success(request, 'Adres został zaktualizowany.')
+                return redirect('admin_address_view')
+    
     return render(request, 'admin_address_view.html', {'miasta': addresses, 'form': form})
 
 # Administracja - Zarządzanie wypożyczeniami
@@ -178,6 +210,41 @@ def admin_rent_view(request):
     rentals = RentalService.get_all_rentals()
     form = RentForm()
     
+    if request.method == 'POST':
+        if 'dodaj' in request.POST:
+            form = RentForm(request.POST)
+            if form.is_valid():
+                rental_data = {
+                    'data_poczatkowa': form.cleaned_data['data_poczatkowa'],
+                    'data_koncowa': form.cleaned_data['data_koncowa'],
+                    'id_auta_id': form.cleaned_data['id_auta'].id_auta,
+                    'id_user_id': form.cleaned_data['id_user'].id_user
+                }
+                rental, error = RentalService.create_rental(rental_data)
+                if rental:
+                    messages.success(request, 'Wypożyczenie zostało dodane.')
+                else:
+                    messages.error(request, error or 'Nie udało się dodać wypożyczenia.')
+                return redirect('admin_rent_view')
+        elif 'usun' in request.POST:
+            rental_id = request.POST.get('id_wypozyczenia')
+            RentalService.delete_rental(rental_id)
+            messages.success(request, 'Wypożyczenie zostało usunięte.')
+            return redirect('admin_rent_view')
+        elif 'edytuj' in request.POST:
+            rental_id = request.POST.get('id_wypozyczenia')
+            form = RentForm(request.POST)
+            if form.is_valid():
+                rental_data = {
+                    'data_poczatkowa': form.cleaned_data['data_poczatkowa'],
+                    'data_koncowa': form.cleaned_data['data_koncowa'],
+                    'id_auta_id': form.cleaned_data['id_auta'].id_auta,
+                    'id_user_id': form.cleaned_data['id_user'].id_user
+                }
+                RentalService.update_rental(rental_id, rental_data)
+                messages.success(request, 'Wypożyczenie zostało zaktualizowane.')
+                return redirect('admin_rent_view')
+    
     return render(request, 'admin_rent_view.html', {'wypozyczenia': rentals, 'form': form})
 
 # Administracja - Zarządzanie administratorami
@@ -188,6 +255,43 @@ def admin_admin_view(request):
     
     admins = AdminService.get_all_admins()
     form = AdminForm()
+    
+    if request.method == 'POST':
+        if 'dodaj' in request.POST:
+            form = AdminForm(request.POST)
+            if form.is_valid():
+                admin_data = {
+                    'imie': form.cleaned_data['imie'],
+                    'nazwisko': form.cleaned_data['nazwisko'],
+                    'email': form.cleaned_data['email']
+                }
+                password = form.cleaned_data.get('password')
+                AdminService.create_admin(admin_data, password)
+                messages.success(request, 'Administrator został dodany.')
+                return redirect('admin_admin_view')
+        elif 'usun' in request.POST:
+            admin_id = request.POST.get('id_admin')
+            # Nie pozwól usunąć zalogowanego administratora
+            if int(admin_id) == request.session.get('user_id'):
+                messages.error(request, 'Nie możesz usunąć swojego konta!')
+                return redirect('admin_admin_view')
+            
+            AdminService.delete_admin(admin_id)
+            messages.success(request, 'Administrator został usunięty.')
+            return redirect('admin_admin_view')
+        elif 'edytuj' in request.POST:
+            admin_id = request.POST.get('id_admin')
+            form = AdminForm(request.POST)
+            if form.is_valid():
+                admin_data = {
+                    'imie': form.cleaned_data['imie'],
+                    'nazwisko': form.cleaned_data['nazwisko'],
+                    'email': form.cleaned_data['email']
+                }
+                password = form.cleaned_data.get('password')
+                AdminService.update_admin(admin_id, admin_data, password)
+                messages.success(request, 'Administrator został zaktualizowany.')
+                return redirect('admin_admin_view')
     
     return render(request, 'admin_admin_view.html', {'administratorzy': admins, 'form': form})
 
@@ -210,12 +314,50 @@ def admin_blackList_view(request):
     
     blacklist = BlacklistService.get_all_blacklist()
     form = BlackListForm()
-
+    
+    # Automatycznie ustaw aktualnego administratora jako dodającego
     if request.method == 'GET':
-        admin_id = request.session.get('user_id')
-        admin = AdminService.get_admin_by_id(admin_id)
-        if admin:
-            form = BlackListForm(initial={'id_admin': admin})
+        try:
+            admin_id = request.session.get('user_id')
+            admin = AdminService.get_admin_by_id(admin_id)
+            if admin:
+                form = BlackListForm(initial={'id_admin': admin})
+        except Exception as e:
+            messages.error(request, f'Błąd podczas inicjalizacji formularza: {str(e)}')
+    
+    if request.method == 'POST':
+        if 'dodaj' in request.POST:
+            form = BlackListForm(request.POST)
+            if form.is_valid():
+                blacklist_data = {
+                    'id_user_id': form.cleaned_data['id_user'].id_user,
+                    'powod': form.cleaned_data['powod'],
+                    'data_poczatkowa': form.cleaned_data['data_poczatkowa'],
+                    'data_koncowa': form.cleaned_data['data_koncowa'],
+                    'id_admin_id': form.cleaned_data['id_admin'].id_admin
+                }
+                BlacklistService.add_to_blacklist(blacklist_data)
+                messages.success(request, 'Użytkownik został dodany do czarnej listy.')
+                return redirect('admin_blackList_view')
+        elif 'usun' in request.POST:
+            blacklist_id = request.POST.get('id_bl')
+            BlacklistService.delete_blacklist_entry(blacklist_id)
+            messages.success(request, 'Wpis został usunięty z czarnej listy.')
+            return redirect('admin_blackList_view')
+        elif 'edytuj' in request.POST:
+            blacklist_id = request.POST.get('id_bl')
+            form = BlackListForm(request.POST)
+            if form.is_valid():
+                blacklist_data = {
+                    'id_user_id': form.cleaned_data['id_user'].id_user,
+                    'powod': form.cleaned_data['powod'],
+                    'data_poczatkowa': form.cleaned_data['data_poczatkowa'],
+                    'data_koncowa': form.cleaned_data['data_koncowa'],
+                    'id_admin_id': form.cleaned_data['id_admin'].id_admin
+                }
+                BlacklistService.update_blacklist_entry(blacklist_id, blacklist_data)
+                messages.success(request, 'Wpis czarnej listy został zaktualizowany.')
+                return redirect('admin_blackList_view')
     
     return render(request, 'admin_blackList_view.html', {'czarna_lista': blacklist, 'form': form})
 

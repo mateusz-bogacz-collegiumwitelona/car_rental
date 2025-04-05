@@ -39,3 +39,7 @@ class AdminService:
     @staticmethod
     def get_all_admins():
         return AdminRepository.get_all_admins()
+    
+    @staticmethod
+    def delete_admin(admin_id):
+        return AdminRepository.delete_admin(admin_id)

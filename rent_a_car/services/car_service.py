@@ -70,7 +70,7 @@ class CarService:
 
     @staticmethod
     def get_car_photos(car_id):
-        return CarRepository.get_car_photo(car_id)
+        return CarRepository.get_car_photos(car_id)
 
     @staticmethod
     def get_all_cars():
