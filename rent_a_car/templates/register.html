@@ -70,41 +70,41 @@
                             <h5 class="mb-3 mt-4">Adres zamieszkania</h5>
                             
                             <div class="form-group mb-3">
-                                <label for="{{ form.city.id_for_label }}">Miasto</label>
-                                {{ form.city }}
-                                {% if form.city.errors %}
+                                <label for="{{ form.miasto.id_for_label }}">{{ form.miasto.label }}</label>
+                                {{ form.miasto }}
+                                {% if form.miasto.errors %}
                                     <div class="text-danger">
-                                        {{ form.city.errors }}
+                                        {{ form.miasto.errors }}
                                     </div>
                                 {% endif %}
                             </div>
                             
                             <div class="form-group mb-3">
-                                <label for="{{ form.street.id_for_label }}">Ulica</label>
-                                {{ form.street }}
-                                {% if form.street.errors %}
+                                <label for="{{ form.ulica.id_for_label }}">{{ form.ulica.label }}</label>
+                                {{ form.ulica }}
+                                {% if form.ulica.errors %}
                                     <div class="text-danger">
-                                        {{ form.street.errors }}
+                                        {{ form.ulica.errors }}
                                     </div>
                                 {% endif %}
                             </div>
                             
                             <div class="form-group mb-3">
-                                <label for="{{ form.street_numb.id_for_label }}">Numer ulicy</label>
-                                {{ form.street_numb }}
-                                {% if form.street_numb.errors %}
+                                <label for="{{ form.nr_ulicy.id_for_label }}">{{ form.nr_ulicy.label }}</label>
+                                {{ form.nr_ulicy }}
+                                {% if form.nr_ulicy.errors %}
                                     <div class="text-danger">
-                                        {{ form.street_numb.errors }}
+                                        {{ form.nr_ulicy.errors }}
                                     </div>
                                 {% endif %}
                             </div>
                             
                             <div class="form-group mb-3">
-                                <label for="{{ form.zip_code.id_for_label }}">Kod pocztowy</label>
-                                {{ form.zip_code }}
-                                {% if form.zip_code.errors %}
+                                <label for="{{ form.kod_pocztowy.id_for_label }}">{{ form.kod_pocztowy.label }}</label>
+                                {{ form.kod_pocztowy }}
+                                {% if form.kod_pocztowy.errors %}
                                     <div class="text-danger">
-                                        {{ form.zip_code.errors }}
+                                        {{ form.kod_pocztowy.errors }}
                                     </div>
                                 {% endif %}
                             </div>
@@ -112,21 +112,21 @@
                             <h5 class="mb-3 mt-4">Hasło</h5>
                             
                             <div class="form-group mb-3">
-                                <label for="{{ form.password.id_for_label }}">Hasło</label>
-                                {{ form.password }}
-                                {% if form.password.errors %}
+                                <label for="{{ form.haslo.id_for_label }}">{{ form.haslo.label }}</label>
+                                {{ form.haslo }}
+                                {% if form.haslo.errors %}
                                     <div class="text-danger">
-                                        {{ form.password.errors }}
+                                        {{ form.haslo.errors }}
                                     </div>
                                 {% endif %}
                             </div>
                             
                             <div class="form-group mb-3">
-                                <label for="{{ form.check_passowrd.id_for_label }}">Potwierdzenie hasła</label>
-                                {{ form.check_passowrd }}
-                                {% if form.check_passowrd.errors %}
+                                <label for="{{ form.potwierdzenie_hasla.id_for_label }}">{{ form.potwierdzenie_hasla.label }}</label>
+                                {{ form.potwierdzenie_hasla }}
+                                {% if form.potwierdzenie_hasla.errors %}
                                     <div class="text-danger">
-                                        {{ form.check_passowrd.errors }}
+                                        {{ form.potwierdzenie_hasla.errors }}
                                     </div>
                                 {% endif %}
                             </div>

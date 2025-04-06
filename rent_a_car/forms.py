@@ -1,6 +1,5 @@
 from django import forms
 from .models import Admin, Auta, Miasta, Uzytkownicy, Wypozyczenie, CzarnaLista
-
 #logowanie 
 class LoginForm(forms.Form):
     email = forms.EmailField(
