@@ -257,31 +257,60 @@ def admin_admin_view(request):
     form = AdminForm()
     
     if request.method == 'POST':
+        print("POST request received in admin_admin_view")
+        print(f"POST data: {request.POST}")
+        
         if 'dodaj' in request.POST:
             form = AdminForm(request.POST)
+            print(f"Form is valid: {form.is_valid()}")
+            
             if form.is_valid():
+                print("Form is valid, attempting to create admin")
                 admin_data = {
                     'imie': form.cleaned_data['imie'],
                     'nazwisko': form.cleaned_data['nazwisko'],
                     'email': form.cleaned_data['email']
                 }
                 password = form.cleaned_data.get('password')
-                AdminService.create_admin(admin_data, password)
-                messages.success(request, 'Administrator został dodany.')
+                
+                try:
+                    admin = AdminService.create_admin(admin_data, password)
+                    print(f"Admin created: {admin}")
+                    messages.success(request, 'Administrator został dodany.')
+                except Exception as e:
+                    print(f"Error creating admin: {str(e)}")
+                    messages.error(request, f'Błąd podczas dodawania administratora: {str(e)}')
+                
                 return redirect('admin_admin_view')
+            else:
+                print(f"Form errors: {form.errors}")
+        
         elif 'usun' in request.POST:
             admin_id = request.POST.get('id_admin')
+            print(f"Attempting to delete admin with ID: {admin_id}")
+            
             # Nie pozwól usunąć zalogowanego administratora
             if int(admin_id) == request.session.get('user_id'):
                 messages.error(request, 'Nie możesz usunąć swojego konta!')
                 return redirect('admin_admin_view')
             
-            AdminService.delete_admin(admin_id)
-            messages.success(request, 'Administrator został usunięty.')
+            try:
+                AdminService.delete_admin(admin_id)
+                print(f"Admin deleted with ID: {admin_id}")
+                messages.success(request, 'Administrator został usunięty.')
+            except Exception as e:
+                print(f"Error deleting admin: {str(e)}")
+                messages.error(request, f'Błąd podczas usuwania administratora: {str(e)}')
+            
             return redirect('admin_admin_view')
+        
         elif 'edytuj' in request.POST:
             admin_id = request.POST.get('id_admin')
+            print(f"Attempting to edit admin with ID: {admin_id}")
+            
             form = AdminForm(request.POST)
+            print(f"Edit form is valid: {form.is_valid()}")
+            
             if form.is_valid():
                 admin_data = {
                     'imie': form.cleaned_data['imie'],
@@ -289,9 +318,18 @@ def admin_admin_view(request):
                     'email': form.cleaned_data['email']
                 }
                 password = form.cleaned_data.get('password')
-                AdminService.update_admin(admin_id, admin_data, password)
-                messages.success(request, 'Administrator został zaktualizowany.')
+                
+                try:
+                    AdminService.update_admin(admin_id, admin_data, password)
+                    print(f"Admin updated with ID: {admin_id}")
+                    messages.success(request, 'Administrator został zaktualizowany.')
+                except Exception as e:
+                    print(f"Error updating admin: {str(e)}")
+                    messages.error(request, f'Błąd podczas aktualizacji administratora: {str(e)}')
+                
                 return redirect('admin_admin_view')
+            else:
+                print(f"Edit form errors: {form.errors}")
     
     return render(request, 'admin_admin_view.html', {'administratorzy': admins, 'form': form})
 
@@ -304,7 +342,97 @@ def admin_user_view(request):
     users = UserService.get_all_users()
     form = UserForm()
     
+    if request.method == 'POST':
+        print("POST request received in admin_user_view")
+        print(f"POST data: {request.POST}")
+        
+        if 'dodaj' in request.POST:
+            form = UserForm(request.POST)
+            print(f"Form is valid: {form.is_valid()}")
+            
+            if form.is_valid():
+                print("Form is valid, attempting to create user")
+                
+                # Przygotuj dane użytkownika
+                user_data = {
+                    'imie': form.cleaned_data['imie'],
+                    'nazwisko': form.cleaned_data['nazwisko'],
+                    'pesel': form.cleaned_data['pesel'],
+                    'email': form.cleaned_data['email'],
+                }
+                
+                # Pobierz hasło i adres zamieszkania
+                haslo = form.cleaned_data.get('haslo')
+                id_zamieszkania = form.cleaned_data.get('id_zamieszkania')
+                
+                try:
+                    # Hashuj hasło i dodaj do danych użytkownika
+                    from django.contrib.auth.hashers import make_password
+                    user_data['haslo'] = make_password(haslo)
+                    user_data['id_zamieszkania'] = id_zamieszkania
+                    
+                    # Utwórz użytkownika za pomocą repozytorium
+                    from .repositories.user_repository import UserRepository
+                    user = UserRepository.create_user(user_data)
+                    
+                    print(f"User created: {user}")
+                    messages.success(request, 'Użytkownik został dodany.')
+                except Exception as e:
+                    print(f"Error creating user: {str(e)}")
+                    messages.error(request, f'Błąd podczas dodawania użytkownika: {str(e)}')
+                
+                return redirect('admin_user_view')
+            else:
+                print(f"Form errors: {form.errors}")
+        
+        elif 'usun' in request.POST:
+            user_id = request.POST.get('id_user')
+            print(f"Attempting to delete user with ID: {user_id}")
+            
+            try:
+                from .repositories.user_repository import UserRepository
+                UserRepository.delete_user(user_id)
+                print(f"User deleted with ID: {user_id}")
+                messages.success(request, 'Użytkownik został usunięty.')
+            except Exception as e:
+                print(f"Error deleting user: {str(e)}")
+                messages.error(request, f'Błąd podczas usuwania użytkownika: {str(e)}')
+            
+            return redirect('admin_user_view')
+        
+        elif 'edytuj' in request.POST:
+            user_id = request.POST.get('id_user')
+            print(f"Attempting to edit user with ID: {user_id}")
+            
+            form = UserForm(request.POST)
+            print(f"Edit form is valid: {form.is_valid()}")
+            
+            if form.is_valid():
+                user_data = {
+                    'imie': form.cleaned_data['imie'],
+                    'nazwisko': form.cleaned_data['nazwisko'],
+                    'pesel': form.cleaned_data['pesel'],
+                    'email': form.cleaned_data['email'],
+                    'id_zamieszkania': form.cleaned_data['id_zamieszkania']
+                }
+                
+                haslo = form.cleaned_data.get('haslo')
+                
+                try:
+                    # Aktualizuj użytkownika
+                    UserService.update_user(user_id, user_data, haslo)
+                    print(f"User updated with ID: {user_id}")
+                    messages.success(request, 'Użytkownik został zaktualizowany.')
+                except Exception as e:
+                    print(f"Error updating user: {str(e)}")
+                    messages.error(request, f'Błąd podczas aktualizacji użytkownika: {str(e)}')
+                
+                return redirect('admin_user_view')
+            else:
+                print(f"Edit form errors: {form.errors}")
+    
     return render(request, 'admin_user_view.html', {'uzytkownicy': users, 'form': form})
+
 
 # Administracja - Zarządzanie czarną listą
 def admin_blackList_view(request):

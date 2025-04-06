@@ -17,10 +17,11 @@ class AdminService:
         return None
     
     @staticmethod
-    def create_admin(admnin_data, password):
-        admnin_data['password'] = make_password(password)
-        return AdminRepository.create_admin(admnin_data)
+    def create_admin(admin_data, password):
+        admin_data['password'] = make_password(password)
+        return AdminRepository.create_admin(admin_data)
     
+    @staticmethod
     def update_admin(admin_id, admin_data, password=None):
         admin = AdminRepository.get_by_id(admin_id)
 

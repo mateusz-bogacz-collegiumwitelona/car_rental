@@ -62,18 +62,17 @@ class CityForm(forms.ModelForm):
 
 #folmularz urzytkowicy
 class UserForm(forms.ModelForm):
-    password = forms.CharField(
+    haslo = forms.CharField(
         label='Hasło',
-        widget=forms.PasswordInput(attrs={'class': 'form_control'}),
-        required=False
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        required=True  # Zmienione na True, żeby wymagało hasła
     )
-
-    check_password = forms.CharField(
+    potwierdzenie_hasla = forms.CharField(
         label='Potwierdź Hasło',
-        widget=forms.PasswordInput(attrs={'class': 'form_control'}),
-        required=False
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        required=True  # Zmienione na True, żeby wymagało potwierdzenia hasła
     )
-
+    
     class Meta:
         model = Uzytkownicy
         fields = ['imie', 'nazwisko', 'pesel', 'email', 'id_zamieszkania']
@@ -84,7 +83,6 @@ class UserForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'id_zamieszkania': forms.Select(attrs={'class': 'form-control'}),
         }
-
         labels = {
             'imie': 'Imię',
             'nazwisko': 'Nazwisko',
@@ -92,17 +90,17 @@ class UserForm(forms.ModelForm):
             'email': 'Email',
             'id_zamieszkania': 'Adres zamieszkania',
         }
-
+        
     def clean(self):
         cleaned_data = super().clean()
-        passwrod = cleaned_data.get('haslo')
-        check_password = cleaned_data.get('potwierdzenie_hasla')
-
-        if passwrod and passwrod != check_password:
-            raise forms.ValidationError("Hasła nie są idętyczne")
+        haslo = cleaned_data.get('haslo')
+        potwierdzenie_hasla = cleaned_data.get('potwierdzenie_hasla')
+        
+        if haslo and haslo != potwierdzenie_hasla:
+            raise forms.ValidationError("Hasła nie są identyczne")
         
         return cleaned_data
-    
+
 #formularz admina
 class AdminForm(forms.ModelForm):
     password = forms.CharField(

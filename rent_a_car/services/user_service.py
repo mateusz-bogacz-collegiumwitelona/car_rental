@@ -58,7 +58,7 @@ class UserService:
         return Miasta.objects.all()
     
     @staticmethod
-    def get_user_by_id(uesr_id):
+    def get_user_by_id(user_id):
         return UserRepository.get_by_id(user_id)
     
     @staticmethod
