@@ -94,14 +94,14 @@ def register_view(request):
                 'nazwisko': form.cleaned_data['nazwisko'],
                 'pesel': form.cleaned_data['pesel'],
                 'email': form.cleaned_data['email'],
-                'haslo': form.cleaned_data['haslo']
+                'haslo': form.cleaned_data['password']
             }
             
             address_data = {
-                'miasto': form.cleaned_data['miasto'],
-                'ulica': form.cleaned_data['ulica'],
-                'nr_ulicy': form.cleaned_data['nr_ulicy'],
-                'kod_pocztowy': form.cleaned_data['kod_pocztowy']
+                'miasto': form.cleaned_data['city'],
+                'ulica': form.cleaned_data['street'],
+                'nr_ulicy': form.cleaned_data['street_numb'],
+                'kod_pocztowy': form.cleaned_data['zip_code']
             }
 
             UserService.create_user(user_data, address_data)
