@@ -108,7 +108,7 @@ class AdminForm(forms.ModelForm):
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         required=False
     )
-    check_password = forms.CharField(
+    potwierdzenie_hasla = forms.CharField(  # Changed from check_password to match HTML form
         label='Potwierdź hasło', 
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         required=False
@@ -131,13 +131,13 @@ class AdminForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get('password')
-        check_password = cleaned_data.get('potwierdzenie_hasla')
+        check_password = cleaned_data.get('potwierdzenie_hasla')  # Now this matches the field name
 
         if password and password != check_password:
             raise forms.ValidationError("Hasła nie są identyczne.")
         
         return cleaned_data
-
+    
 #formularz wypożyczenia
 class RentForm(forms.ModelForm):
     class Meta:

@@ -201,6 +201,8 @@ def admin_address_view(request):
     
     return render(request, 'admin_address_view.html', {'miasta': addresses, 'form': form})
 
+
+
 # Administracja - Zarządzanie wypożyczeniami
 def admin_rent_view(request):
     if not is_admin_logged_in(request):
