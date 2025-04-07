@@ -1,7 +1,9 @@
 import logging
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db import models
 from datetime import datetime
+import os
 
 from .forms import (
     LoginForm, CarForm, CityForm, UserForm,
@@ -599,6 +601,7 @@ def admin_car_photos(request, car_id):
     available_images = CarService.get_available_images()
     
     if request.method == 'POST':
+        # Obsługa dodawania istniejącego zdjęcia
         if 'add_photo' in request.POST:
             selected_image = request.POST.get('selected_image')
             if selected_image:
@@ -616,11 +619,131 @@ def admin_car_photos(request, car_id):
                     return redirect('admin_car_photos', car_id=car_id)
             else:
                 messages.error(request, 'Nie wybrano zdjęcia.')
+        
+        # Obsługa dodawania nowego zdjęcia z komputera
+        elif 'upload_photo' in request.POST and request.FILES.get('upload_image'):
+            if len(photos) >= 5:
+                messages.error(request, 'Maksymalna liczba zdjęć dla jednego auta to 5.')
+            else:
+                try:
+                    # Obsługa przesyłanego pliku
+                    uploaded_image = request.FILES['upload_image']
+                    
+                    # Sprawdzenie czy plik jest obrazem na podstawie rozszerzenia
+                    import os
+                    file_ext = os.path.splitext(uploaded_image.name)[1].lower()
+                    allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
+                    
+                    if file_ext not in allowed_extensions:
+                        messages.error(request, 'Wybrany plik nie jest obrazem. Dozwolone formaty to: JPG, PNG, GIF, BMP.')
+                        return redirect('admin_car_photos', car_id=car_id)
+                    
+                    # Generowanie unikalnej nazwy pliku
+                    from django.utils.text import slugify
+                    filename = f"{slugify(car.marka)}_{slugify(car.model)}_{datetime.now().strftime('%Y%m%d%H%M%S')}{file_ext}"
+                    
+                    # Ścieżka zapisu
+                    from django.conf import settings
+                    
+                    # Upewnij się, że katalog istnieje
+                    cars_dir = os.path.join(settings.MEDIA_ROOT, 'cars')
+                    os.makedirs(cars_dir, exist_ok=True)
+                    
+                    # Pełna ścieżka zapisu
+                    file_path = os.path.join(cars_dir, filename)
+                    
+                    # Zapisz plik
+                    with open(file_path, 'wb+') as destination:
+                        for chunk in uploaded_image.chunks():
+                            destination.write(chunk)
+                    
+                    # Dodaj zdjęcie do bazy danych
+                    photo_data = {
+                        'id_auta_id': car_id,
+                        'zdj': f'cars/{filename}',
+                        'kolejnosc': len(photos) + 1,
+                        'created_at': datetime.now()
+                    }
+                    CarService.add_car_photo(car_id, photo_data)
+                    messages.success(request, 'Zdjęcie zostało pomyślnie wgrane i dodane.')
+                    return redirect('admin_car_photos', car_id=car_id)
+                
+                except Exception as e:
+                    messages.error(request, f'Wystąpił błąd podczas wgrywania zdjęcia: {str(e)}')
+        
+        # Obsługa usuwania zdjęcia
+        elif 'delete_photo' in request.POST:
+            photo_id = request.POST.get('photo_id')
+            if photo_id:
+                try:
+                    # Znajdź zdjęcie przed usunięciem, aby poznać jego kolejność
+                    from .models import AutaZdj
+                    photo = AutaZdj.objects.get(id_zdj=photo_id)
+                    deleted_order = photo.kolejnosc
+                    
+                    # Usuń zdjęcie
+                    CarService.delete_car_photo(photo_id)
+                    
+                    # Aktualizacja kolejności pozostałych zdjęć
+                    remaining_photos = AutaZdj.objects.filter(id_auta=car_id).order_by('kolejnosc')
+                    for i, photo in enumerate(remaining_photos, 1):
+                        if photo.kolejnosc != i:
+                            photo.kolejnosc = i
+                            photo.save()
+                    
+                    messages.success(request, 'Zdjęcie zostało usunięte.')
+                except Exception as e:
+                    messages.error(request, f'Wystąpił błąd podczas usuwania zdjęcia: {str(e)}')
+            return redirect('admin_car_photos', car_id=car_id)
+        
+        # Obsługa zmiany kolejności zdjęcia
+        elif 'change_order' in request.POST:
+            photo_id = request.POST.get('photo_id')
+            new_order = request.POST.get('new_order')
+            
+            if photo_id and new_order:
+                try:
+                    from .models import AutaZdj
+                    from django.db import models
+                    
+                    photo_to_update = AutaZdj.objects.get(id_zdj=photo_id)
+                    old_order = photo_to_update.kolejnosc
+                    new_order = int(new_order)
+                    
+                    # Jeśli nowa kolejność jest taka sama, nic nie rób
+                    if old_order == new_order:
+                        return redirect('admin_car_photos', car_id=car_id)
+                    
+                    # Zaktualizuj kolejność innych zdjęć
+                    if old_order < new_order:
+                        # Przesuwanie w dół
+                        AutaZdj.objects.filter(
+                            id_auta=car_id, 
+                            kolejnosc__gt=old_order, 
+                            kolejnosc__lte=new_order
+                        ).update(kolejnosc=models.F('kolejnosc') - 1)
+                    else:
+                        # Przesuwanie w górę
+                        AutaZdj.objects.filter(
+                            id_auta=car_id, 
+                            kolejnosc__lt=old_order, 
+                            kolejnosc__gte=new_order
+                        ).update(kolejnosc=models.F('kolejnosc') + 1)
+                    
+                    # Ustaw nową kolejność dla aktualizowanego zdjęcia
+                    photo_to_update.kolejnosc = new_order
+                    photo_to_update.save()
+                    
+                    messages.success(request, 'Kolejność zdjęć została zaktualizowana.')
+                except Exception as e:
+                    messages.error(request, f'Wystąpił błąd podczas zmiany kolejności: {str(e)}')
+            
+            return redirect('admin_car_photos', car_id=car_id)
     
     context = {
         'car': car,
         'photos': photos,
-        'available_images': available_images
+        'available_images': available_images,
     }
     
     return render(request, 'admin_car_photos.html', context)

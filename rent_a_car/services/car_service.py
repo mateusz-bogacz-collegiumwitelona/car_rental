@@ -73,6 +73,10 @@ class CarService:
         return CarRepository.get_car_photos(car_id)
 
     @staticmethod
+    def delete_car_photo(photo_id):
+        return CarRepository.delete_car_photo(photo_id)
+
+    @staticmethod
     def get_all_cars():
         return CarRepository.get_all_cars()
     
@@ -80,8 +84,11 @@ class CarService:
     def get_available_images():
         available_images = []
         cars_dir = os.path.join(settings.MEDIA_ROOT, 'cars')
+        os.makedirs(cars_dir, exist_ok=True)
+        
         if os.path.exists(cars_dir):
-            available_images = [f for f in os.listdir(cars_dir) if os.path.isfile(os.path.join(cars_dir, f))]
+            available_images = [f for f in os.listdir(cars_dir) if os.path.isfile(os.path.join(cars_dir, f)) and 
+                               f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
         
         return available_images
     
@@ -92,3 +99,7 @@ class CarService:
     @staticmethod
     def delete_car(car_id):
         return CarRepository.delete_car(car_id)
+    
+    @staticmethod
+    def update_photo_order(car_id, photo_id, new_order):
+        return CarRepository.update_photo_order(car_id, photo_id, new_order)
