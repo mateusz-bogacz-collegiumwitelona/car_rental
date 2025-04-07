@@ -60,8 +60,6 @@ class CarRepository:
     def delete_car(car_id):
 
         car = Auta.objects.get(id_auta=car_id)
-        
-        # Przed usunięciem samochodu, usuń wszystkie jego zdjęcia
         photos = AutaZdj.objects.filter(id_auta=car_id)
         for photo in photos:
             CarRepository.delete_car_photo(photo.id_zdj)
@@ -71,35 +69,26 @@ class CarRepository:
         
     @staticmethod
     def update_photo_order(car_id, photo_id, new_order):
-        """
-        Aktualizuje kolejność zdjęcia i dostosowuje kolejność pozostałych zdjęć
-        """
         try:
             photo_to_update = AutaZdj.objects.get(id_zdj=photo_id)
             old_order = photo_to_update.kolejnosc
             new_order = int(new_order)
-            
-            # Jeśli nowa kolejność jest taka sama, nic nie rób
             if old_order == new_order:
                 return photo_to_update
             
-            # Zaktualizuj kolejność innych zdjęć
             if old_order < new_order:
-                # Przesuwanie w dół
                 AutaZdj.objects.filter(
                     id_auta=car_id, 
                     kolejnosc__gt=old_order, 
                     kolejnosc__lte=new_order
                 ).update(kolejnosc=models.F('kolejnosc') - 1)
             else:
-                # Przesuwanie w górę
                 AutaZdj.objects.filter(
                     id_auta=car_id, 
                     kolejnosc__lt=old_order, 
                     kolejnosc__gte=new_order
                 ).update(kolejnosc=models.F('kolejnosc') + 1)
-            
-            # Ustaw nową kolejność dla aktualizowanego zdjęcia
+
             photo_to_update.kolejnosc = new_order
             photo_to_update.save()
             
