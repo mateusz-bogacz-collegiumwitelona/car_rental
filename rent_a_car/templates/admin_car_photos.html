@@ -5,10 +5,7 @@
     {% include "includes/head.html" %}
 </head>
 <body>
-    {% include "includes/navbar.html" %}
-
-    <h2>Zalogowany do panelu użytkownika</h2>
-
+    {% include "includes/navbar3.html" %}
 {% block content %}
 <div class="container mt-4">
     <h2>Zarządzanie zdjęciami: {{ car.marka }} {{ car.model }}</h2>
@@ -79,28 +76,24 @@
         </div>
         
         <div class="col-md-4">
-            <div class="card">
+            <!-- Formularz do wgrywania nowych zdjęć -->
+            <div class="card mb-3">
                 <div class="card-header bg-success text-white">
-                    <h3 class="mb-0">Dodaj zdjęcie</h3>
+                    <h3 class="mb-0">Dodaj nowe zdjęcie</h3>
                 </div>
                 <div class="card-body">
                     {% if photos.count < 5 %}
-                    <form method="post">
+                    <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="mb-3">
-                            <label for="selected_image" class="form-label">Wybierz zdjęcie:</label>
-                            <select name="selected_image" id="selected_image" class="form-control" required>
-                                <option value="">-- Wybierz zdjęcie --</option>
-                                {% for image in available_images %}
-                                <option value="{{ image }}">{{ image }}</option>
-                                {% endfor %}
-                            </select>
+                            <label for="upload_image" class="form-label">Wgraj zdjęcie z komputera:</label>
+                            <input type="file" name="upload_image" id="upload_image" class="form-control" accept="image/*" required>
                             <small class="form-text text-muted">
-                                Dostępne zdjęcia z katalogu media/cars.
+                                Akceptowane formaty: JPG, PNG, GIF. Zalecane wymiary: 1200x800 pikseli.
                             </small>
                         </div>
-                        <button type="submit" name="add_photo" class="btn btn-success w-100">
-                            <i class="fas fa-plus"></i> Dodaj zdjęcie
+                        <button type="submit" name="upload_photo" class="btn btn-success w-100">
+                            <i class="fas fa-upload"></i> Wgraj zdjęcie
                         </button>
                     </form>
                     {% else %}
@@ -111,15 +104,49 @@
                 </div>
             </div>
             
-            <div class="card mt-3">
+            <!-- Formularz do wyboru istniejących zdjęć -->
+            <div class="card">
                 <div class="card-header bg-info text-white">
+                    <h3 class="mb-0">Wybierz istniejące zdjęcie</h3>
+                </div>
+                <div class="card-body">
+                    {% if photos.count < 5 %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="selected_image" class="form-label">Wybierz zdjęcie z biblioteki:</label>
+                            <select name="selected_image" id="selected_image" class="form-control" required>
+                                <option value="">-- Wybierz zdjęcie --</option>
+                                {% for image in available_images %}
+                                <option value="{{ image }}">{{ image }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">
+                                Dostępne zdjęcia z katalogu media/cars.
+                            </small>
+                        </div>
+                        <button type="submit" name="add_photo" class="btn btn-info w-100">
+                            <i class="fas fa-plus"></i> Dodaj zdjęcie z biblioteki
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        Osiągnięto maksymalną liczbę zdjęć (5). Usuń istniejące zdjęcie, aby dodać nowe.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Informacje pomocnicze -->
+            <div class="card mt-3">
+                <div class="card-header bg-secondary text-white">
                     <h3 class="mb-0">Informacja</h3>
                 </div>
                 <div class="card-body">
                     <ul class="mb-0">
                         <li>Możesz dodać maksymalnie 5 zdjęć dla każdego samochodu.</li>
                         <li>Pierwsze zdjęcie (kolejność 1) będzie wyświetlane jako główne w liście samochodów.</li>
-                        <li>Zdjęcia muszą być wcześniej umieszczone w katalogu media/cars.</li>
+                        <li>Możesz wgrać nowe zdjęcie bezpośrednio z komputera lub wybrać z istniejącej biblioteki.</li>
                         <li>Zalecane wymiary: 1200x800 pikseli.</li>
                     </ul>
                 </div>
