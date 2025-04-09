@@ -123,6 +123,23 @@ Jeżeli baza danych została przywrócona bez danych, należy stworzyć użytkow
 
 7. Panel administracyjny będzie dostępny pod adresem: `http://localhost:8000/admin-dashboard`
 
+## Przykładowe dane 
+W folderze databases jest plik `backup_with_example_data.backup`. Po jego przywróceniu będzie dostępne przykładowe dane.
+Użytkownicy dostępni w tym pliku to:
+- Admin:
+   - email: `admin@admin.pl`
+   - hasło `test123`
+
+- Użytkownk bez bana:
+   - email: `user@user.pl`
+   - hasło: `test098`
+
+- Użytkownik z banem:
+  - email: `bogdan@bogdan.pl`
+  - hasło: `bogdan123`
+
+Oprócz tego są dostępne przykładowe samochody.
+
 ## Rozwiązywanie problemów
 
 - **Problem z połączeniem do bazy danych**: Upewnij się, że Docker działa i kontenery są uruchomione (`docker ps`)
