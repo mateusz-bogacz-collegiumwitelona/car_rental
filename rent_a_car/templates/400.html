@@ -1,13 +1,19 @@
-{%load static%}
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="pl">
 <head>
-    {% include "includes/head.html" %}
+    <meta charset="UTF-8">
+    <title>Błąd 400</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.4.0/mdb.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     {% include "includes/navbar.html" %}
 
-    <h2>400</h2>
+    <div class="flex-grow-1 d-flex justify-content-center align-items-center">
+        <h2 class="text-center text-danger">400 – Nieprawidłowe żądanie</h2>
+    </div>
 
     {% include "includes/footer.html" %}
 </body>
