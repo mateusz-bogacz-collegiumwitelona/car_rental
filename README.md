@@ -1,103 +1,135 @@
 # Car Rent
-Wypożyczalnia samochodów napisana w Django, wykorzystująca bazę danych PostgresSQL.
+
+Wypożyczalnia samochodów napisana w Django, wykorzystująca bazę danych PostgreSQL.
 
 ## Co jest potrzebne?
+
 - [Docker](https://www.docker.com/)
-- [Node.JS](https://nodejs.org/en)
-- [Python](https://www.python.org/)
-- Jakikolwiek edytor kodu dla pythona. html i css. Od siebie polecam:
-  - Visual Studio Code (za free)
-  - PyCharm (mamy licencje od uczelni)
-- Jakikowliek program do zarządzania bazą danych. Od siebie polecam:
-  - Pgadmin (za darmo i najlepiej się sprawdza do PostgresSQL)
-  - DataGrip (mamy licencje od uczelni i można go użyć do wielu baz danych)
-  - HeidiSQL (mały, lekki i można go użyć do wielu baz danych)
-  
-## Jak włączyć
+- [pgAdmin](https://www.pgadmin.org/) do zarządzania bazą danych
 
-### Jak przygotować pliki boostrap?
+## Jak uruchomić aplikację
 
-**Jeżeli jeszcze nie masz zainstlowanego Node.js to zainstaluj to przed tymi czynnościami, i najlepiej zresetuj pc**
-Otwórz konsolę w folderze z plikami projektu i wykonaj następujące czynności:
+### 1. Konfiguracja pliku środowiskowego
+
+1. Zmień nazwę pliku `.env.example` na `.env`
+2. W pliku `.env` skonfiguruj następujące pola:
+   - `DATABASE_USERNAME`: ustaw własną nazwę użytkownika
+   - `DATABASE_PASSWORD`: ustaw własne hasło do bazy danych
+
+### 2. Uruchomienie aplikacji w Dockerze
+
+Otwórz konsolę w folderze z plikami projektu i wykonaj następujące komendy:
 
 ```sh
-npm install
-```
-to zainstaluje wszystkie zależności do boostrapa. Done.
-
-### Jak uruchomić środowisko w docker?
-Najpierw zmień nazwę pliku `.env.example` na `.env`.  
-Następnie w polu `DATABASE_USERNAME` ustaw dowolne inną nazwę użytkownika. Oraz w polu `DATABASE_PASSWORD` wstawić dowolne inne hasło do bazy danych.
-
-Otwórz konsolę w folderze z plikami projektu i wykonaj następujące czynności:  
-
-```sh
+# Zbuduj obraz Dockera
 docker-compose build
-```
-To buduje obraz Dockera. Teraz wystarczy tylko uruchomić kontener za pomocą komendy:  
-```sh
+
+# Uruchom kontener
 docker-compose up -d
 ```
 
-Jeżeli chcemy wyłączyć kontenery, wykonujemy:  
+Aby wyłączyć kontenery, wykonaj:
+
 ```sh
 docker-compose down
 ```
-**Jeżeli wproadziłeś jakieś zmiany w wyglądzie html najelpiej będzie zrobić `docker-compose restart` żeby te zmiany były widoczne**
 
-### Jak podłączyć się do bazy danych?
-Zalezy od tego czego używasz. W pgadmin z którego kożystam to jest dość proste bo wysarczy
+> **Uwaga**: Jeżeli wprowadziłeś zmiany w plikach HTML, najlepiej wykonać `docker-compose build`, aby zmiany zostały uwzględnione.
 
-1. Kliknąć na `Servers`
-2. Uzupełnić Name jako `dockerdjango` 
-3. Prześć do zakładki conneciton i tam wprowadzić dane: 
-   1. Host name/adress: `localhost`
-   2. Port: `5432`
-   3. Maintenace database: `dockerdjango`
-   4. Username i password: to co ustawiłeś w .env
+### 3. Dostęp do aplikacji
 
-### Jak przywrócić dane które już testowo stworzyłem 
+Po uruchomieniu, aplikacja będzie dostępna pod adresem: `http://localhost:8000`
 
-Stworzyłem pierwsze dwie tabele. Przywróć je żeby nie było. 
+## Zarządzanie bazą danych
 
-Musisz wejść w `dockerdjango` > `Databases` > `dockerdjango` i pliknąc ppm na to i wybrać opcje `Restore...`.
+### Jak połączyć się z bazą danych (pgAdmin)
 
-Po tym w kliknąc w ikonke folderu obok `Filename` i wybrać plik sql. (Jak się nie wyświtla to zmień typy plików).
+1. Otwórz pgAdmin i kliknij prawym przyciskiem myszy na `Servers`
+2. Wybierz `Create` > `Server...`
+3. W zakładce `General` uzupełnij `Name` dowolną nazwą
+4. Przejdź do zakładki `Connection` i wprowadź następujące dane:
+   - Host name/address: `localhost`
+   - Port: `5433`
+   - Maintenance database: `dockerdjango`
+   - Username: wartość ustawiona jako `DATABASE_USERNAME` w pliku `.env`
+   - Password: wartość ustawiona jako `DATABASE_PASSWORD` w pliku `.env`
+5. Kliknij `Save`
 
-Żeby sprawdzić czy to w ogóle zadziało to musisz wejść w `dockerdjango` > `Databases` > `dockerdjango` > `Schemas` > `public` > `Tabeles` i sprawdzić czy są tabele  city i users.
+### Przywracanie danych testowych
 
-### Jak zrobić backup do przywrócenia
+1. W pgAdmin rozwiń drzewo `Servers` > [Twoja nazwa serwera] > `Databases`
+2. Kliknij prawym przyciskiem myszy na `dockerdjango` i wybierz opcję `Restore...`
+3. Kliknij ikonę folderu obok pola `Filename` i wybierz plik .backup (jeśli plik nie jest widoczny, zmień filtry wyświetlania plików)
+4. Kliknij `Restore`
+5. Aby sprawdzić, czy przywracanie się powiodło, przejdź do `Servers` > [Twoja nazwa serwera] > `Databases` > `dockerdjango` > `Schemas` > `public` > `Tables` i sprawdź, czy tabele są widoczne
 
-**Pamiętaj że trzeba robić bazkupy danych bym też mógł na nich popracować**
+### Tworzenie kopii zapasowej bazy danych
 
-Musisz wejść w `dockerdjango` > `Databases` > `dockerdjango` i pliknąc ppm na to i wybrać opcje `Backup...`.
+> **Ważne**: Pamiętaj o tworzeniu regularnych kopii zapasowych, aby umożliwić współpracę nad projektem.
 
-Po tym w kliknąc w ikonke folderu obok `Filename` i wybrać plik sql. Proszę o zawyanie plików 
+1. W pgAdmin rozwiń drzewo `Servers` > [Twoja nazwa serwera] > `Databases`
+2. Kliknij prawym przyciskiem myszy na `dockerdjango` i wybierz opcję `Backup...`
+3. Ustaw nazwę pliku i lokalizację kopii zapasowej
+4. Kliknij `Backup`
 
-databases_dzień_miesiąc_rok_godzina_minuta.sql żebysmy wiedzeili co kiedy i gdzie.
+## Konfiguracja początkowa
 
-### Wprowadznie zmian w bazie danych do Django
+### Tworzenie konta administratora
 
-Jak zrobisz jakiekolwiek zmiany w bazie danych typu dodanie nowej kompurki czy nowej tabeli to dobrze by było w konsoli odpalić te komendy 
+Jeżeli baza danych została przywrócona bez danych, należy stworzyć użytkownika administratora:
 
-```sh
-docker-compose exec  django-web python manage.py inspectdb > rent_a_car/models.py
-``` 
-doda odpowieni kod pythona do pliku models
+1. Uruchom kontenery:
+   ```sh
+   docker-compose build
+   docker-compose up -d
+   ```
 
-```sh
-docker-compose exec  django-web python manage.py makemigrations
-```
-tworzy plik migracji potrzeby do obsługi bazy danych
+2. Wejdź w powłokę bash kontenera:
+   ```sh
+   docker-compose exec -it rent_a_car bash
+   ```
 
-```sh
-docker-compose exec  django-web python manage.py migrate
-```
-stosuje te migracje
+3. Uruchom powłokę Pythona:
+   ```sh
+   python manage.py shell
+   ```
 
-## Przydatne linki
-- https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/Django (Tutorial od Mozilii)
-- https://www.w3schools.com/django/ (z tego kożystałem tworząc stronę uczelni i ten projekt)
-- https://www.w3schools.com/bootstrap5/index.php (jak zawsze w3school dowozi x6)
-- https://kursbootstrap.pl/o-bootstrapie.html (polski kurs bootstrap)
+4. Wykonaj poniższy skrypt, zastępując wartości "example" własnymi danymi:
+   ```python
+   from django.contrib.auth.hashers import make_password
+   from rent_a_car.models import Admin
+   
+   nowy_admin = Admin(
+       imie="example",
+       nazwisko="example",
+       email="example",
+       password=make_password("example")
+   )
+   nowy_admin.save()
+   print(f"Dodano administratora: {nowy_admin}")
+   exit()
+   ```
 
+5. Wyjdź z powłoki bash:
+   ```sh
+   exit
+   ```
+
+6. Przebuduj i uruchom ponownie kontenery:
+   ```sh
+   docker-compose build
+   docker-compose up -d
+   ```
+
+7. Panel administracyjny będzie dostępny pod adresem: `http://localhost:8000/admin-dashboard`
+
+## Rozwiązywanie problemów
+
+- **Problem z połączeniem do bazy danych**: Upewnij się, że Docker działa i kontenery są uruchomione (`docker ps`)
+- **Nie widać zmian w interfejsie**: Wykonaj `docker-compose build` i uruchom ponownie kontenery
+- **Błąd dostępu do bazy danych**: Sprawdź poprawność danych w pliku `.env`
+
+## Autorzy
+
+- [Paweł Kruk](https://github.com/Kruk43854) - baza danych i frontend
+- [Mateusz Bogacz-Drewniak](https://github.com/mateusz-bogacz-collegiumwitelona) - baza danych i backend
