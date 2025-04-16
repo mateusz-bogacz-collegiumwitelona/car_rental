@@ -105,6 +105,37 @@
             </div>
             
             <!-- Formularz do wyboru istniejących zdjęć -->
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0">Wybierz istniejące zdjęcie</h3>
+                </div>
+                <div class="card-body">
+                    {% if photos.count < 5 %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="selected_image" class="form-label">Wybierz zdjęcie z biblioteki:</label>
+                            <select name="selected_image" id="selected_image" class="form-control" required>
+                                <option value="">-- Wybierz zdjęcie --</option>
+                                {% for image in available_images %}
+                                <option value="{{ image }}">{{ image }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">
+                                Dostępne zdjęcia z katalogu media/cars.
+                            </small>
+                        </div>
+                        <button type="submit" name="add_photo" class="btn btn-info w-100">
+                            <i class="fas fa-plus"></i> Dodaj zdjęcie z biblioteki
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        Osiągnięto maksymalną liczbę zdjęć (5). Usuń istniejące zdjęcie, aby dodać nowe.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
             
             <!-- Informacje pomocnicze -->
             <div class="card mt-3">

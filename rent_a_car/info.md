@@ -1,0 +1,1 @@
+pliki html są w templates
