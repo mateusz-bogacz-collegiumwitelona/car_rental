@@ -23,7 +23,7 @@
             <div class="row">
                 <div class="col-md-6">
                     {% if car_photos %}
-                    <!-- Carousel dla wielu zdjęć -->
+
                     <div id="carPhotosCarousel" class="carousel slide mb-3" data-bs-ride="carousel">
                         <div class="carousel-indicators">
                             {% for photo in car_photos %}
@@ -50,7 +50,7 @@
                         {% endif %}
                     </div>
                     {% else %}
-                    <!-- Placeholder gdy brak zdjęć -->
+       
                     <div class="bg-light text-center py-5 mb-3">
                         <i class="fas fa-car fa-5x"></i>
                         <p class="mt-3">Brak zdjęć</p>
