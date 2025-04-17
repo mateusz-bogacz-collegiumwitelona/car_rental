@@ -1,258 +1,209 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <title>Historia zmian</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.4.0/mdb.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <meta charset="UTF-8" />
+  <title>Historia zmian</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.4.0/mdb.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
-<body style="overflow-x: hidden; margin: 0;">
-<div class="container-fluid">
-    <div class="row min-vh-100" style="height: 100vh;">
 
-        <div class="col-md-2 bg-dark text-white d-flex flex-column p-3">
-            {% include 'includes/admin_sidebar.html' %}
+<body class="d-flex flex-column min-vh-100">
+  {% include 'includes/admin_navbar_mobile.html' %}
+
+  <div class="container-fluid flex-grow-1">
+    <div class="row">
+      {% include 'includes/admin_sidebar.html' %}
+
+      <div class="col-12 col-lg-10 p-4">
+        <h2 class="mb-4">Historia zmian</h2>
+
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Lista zmian w systemie</h5>
+            <a href="?export_csv=1" class="btn btn-success">
+              <i class="fas fa-file-csv"></i> Eksportuj do CSV
+            </a>
+          </div>
+
+          <div class="card-body">
+            <form method="get" class="row g-3 mb-4">
+              <div class="col-md-3">
+                <label class="form-label">Tabela źródłowa</label>
+                <input type="text" class="form-control" name="tabela_zrodlowa" value="{{ request.GET.tabela_zrodlowa|default:'' }}">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Operacja</label>
+                <select class="form-select" name="operacja">
+                  <option value="">Wszystkie</option>
+                  <option value="INSERT" {% if request.GET.operacja == 'INSERT' %}selected{% endif %}>INSERT</option>
+                  <option value="UPDATE" {% if request.GET.operacja == 'UPDATE' %}selected{% endif %}>UPDATE</option>
+                  <option value="DELETE" {% if request.GET.operacja == 'DELETE' %}selected{% endif %}>DELETE</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Miasto</label>
+                <input type="text" class="form-control" name="miasto" value="{{ request.GET.miasto|default:'' }}">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">ID użytkownika</label>
+                <input type="number" class="form-control" name="id_user" value="{{ request.GET.id_user|default:'' }}">
+              </div>
+              <div class="col-12 mt-3 d-flex">
+                <button type="submit" class="btn btn-primary me-2">Filtruj</button>
+                <a href="{{ request.path }}" class="btn btn-secondary">Resetuj filtry</a>
+              </div>
+            </form>
+
+            <div class="table-responsive">
+              <table class="table table-striped text-center align-middle">
+                <thead class="bg-dark text-white">
+                  <tr>
+                    <th>ID</th>
+                    <th>Tabela</th>
+                    <th>ID rekordu</th>
+                    <th>Operacja</th>
+                    <th>Data</th>
+                    <th>Miasto</th>
+                    <th>Użytkownik</th>
+                    <th>Szczegóły</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in historia_zmian_list %}
+                    <tr>
+                      <td>{{ item.id_historii }}</td>
+                      <td>{{ item.tabela_zrodlowa }}</td>
+                      <td>{{ item.id_rekordu }}</td>
+                      <td>
+                        <span class="badge 
+                          {% if item.operacja == 'INSERT' %}bg-success
+                          {% elif item.operacja == 'UPDATE' %}bg-warning text-dark
+                          {% elif item.operacja == 'DELETE' %}bg-danger
+                          {% else %}bg-secondary{% endif %}">
+                          {{ item.operacja }}
+                        </span>
+                      </td>
+                      <td>{{ item.data_operacji|date:"d.m.Y H:i:s"|default:"-" }}</td>
+                      <td>{{ item.miasto|default:"-" }}</td>
+                      <td>
+                        {% if item.imie and item.nazwisko %}
+                          {{ item.imie }} {{ item.nazwisko }}
+                        {% else %}
+                          ID: {{ item.id_user|default:"-" }}
+                        {% endif %}
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#szczegolyModal"
+                          data-id="{{ item.id_historii }}"
+                          data-tabela="{{ item.tabela_zrodlowa }}"
+                          data-rekord="{{ item.id_rekordu }}"
+                          data-operacja="{{ item.operacja }}"
+                          data-data="{{ item.data_operacji|date:'d.m.Y H:i:s'|default:'-' }}"
+                          data-miasto="{{ item.miasto|default:'-' }}"
+                          data-ulica="{{ item.ulica|default:'-' }}"
+                          data-nr="{{ item.nr_ulicy|default:'-' }}"
+                          data-kod="{{ item.kod_pocztowy|default:'-' }}"
+                          data-user="{{ item.id_user|default:'-' }}"
+                          data-imie="{{ item.imie|default:'-' }}"
+                          data-nazwisko="{{ item.nazwisko|default:'-' }}"
+                          data-pesel="{{ item.pesel|default:'-' }}"
+                          data-email="{{ item.email|default:'-' }}"
+                          data-zamieszkanie="{{ item.id_zamieszkania|default:'-' }}">
+                          Szczegóły
+                        </button>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="8" class="text-center">Brak danych w historii zmian.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
-        <div class="container-fluid col-md-10">
-            <nav class="navbar navbar-expand-lg bg-light d-flex flex-wrap justify-content-between align-items-center px-3">
-                <h1 class="mb-4 pt-3 ps-3">Historia zmian</h1>
-            </nav>
-
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Lista zmian w systemie</h5>
-                    <a href="?export_csv=1" class="btn btn-success">
-                        <i class="fas fa-file-csv"></i> Eksportuj do CSV
-                    </a>
+        <!-- MODAL -->
+        <div class="modal fade" id="szczegolyModal" tabindex="-1">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Szczegóły zmiany</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6 class="fw-bold">Zmiana</h6>
+                    <dl class="row">
+                      <dt class="col-sm-4">ID:</dt><dd class="col-sm-8" id="szczegoly_id"></dd>
+                      <dt class="col-sm-4">Tabela:</dt><dd class="col-sm-8" id="szczegoly_tabela"></dd>
+                      <dt class="col-sm-4">ID rekordu:</dt><dd class="col-sm-8" id="szczegoly_rekord"></dd>
+                      <dt class="col-sm-4">Operacja:</dt><dd class="col-sm-8" id="szczegoly_operacja"></dd>
+                      <dt class="col-sm-4">Data:</dt><dd class="col-sm-8" id="szczegoly_data"></dd>
+                    </dl>
+                  </div>
+                  <div class="col-md-6">
+                    <h6 class="fw-bold">Adres</h6>
+                    <dl class="row">
+                      <dt class="col-sm-4">Miasto:</dt><dd class="col-sm-8" id="szczegoly_miasto"></dd>
+                      <dt class="col-sm-4">Ulica:</dt><dd class="col-sm-8" id="szczegoly_ulica"></dd>
+                      <dt class="col-sm-4">Nr:</dt><dd class="col-sm-8" id="szczegoly_nr"></dd>
+                      <dt class="col-sm-4">Kod:</dt><dd class="col-sm-8" id="szczegoly_kod"></dd>
+                      <dt class="col-sm-4">ID zam.:</dt><dd class="col-sm-8" id="szczegoly_zamieszkanie"></dd>
+                    </dl>
+                  </div>
                 </div>
-                <div class="card-body">
-                    <div class="mb-4">
-                        <form method="get" class="row g-3">
-                            <div class="col-md-3">
-                                <label class="form-label">Tabela źródłowa</label>
-                                <input type="text" class="form-control" name="tabela_zrodlowa" value="{{ request.GET.tabela_zrodlowa|default:'' }}">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Operacja</label>
-                                <select class="form-select" name="operacja">
-                                    <option value="">Wszystkie</option>
-                                    <option value="INSERT" {% if request.GET.operacja == 'INSERT' %}selected{% endif %}>INSERT</option>
-                                    <option value="UPDATE" {% if request.GET.operacja == 'UPDATE' %}selected{% endif %}>UPDATE</option>
-                                    <option value="DELETE" {% if request.GET.operacja == 'DELETE' %}selected{% endif %}>DELETE</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Miasto</label>
-                                <input type="text" class="form-control" name="miasto" value="{{ request.GET.miasto|default:'' }}">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">ID użytkownika</label>
-                                <input type="number" class="form-control" name="id_user" value="{{ request.GET.id_user|default:'' }}">
-                            </div>
-                            <div class="col-12 mt-3 d-flex">
-                                <button type="submit" class="btn btn-primary me-2">Filtruj</button>
-                                <a href="{{ request.path }}" class="btn btn-secondary">Resetuj filtry</a>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead class="bg-dark text-white">
-                            <tr>
-                                <th>ID</th>
-                                <th>Tabela źródłowa</th>
-                                <th>ID rekordu</th>
-                                <th>Operacja</th>
-                                <th>Data operacji</th>
-                                <th>Miasto</th>
-                                <th>Użytkownik</th>
-                                <th>Szczegóły</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {% for item in historia_zmian_list %}
-                                <tr>
-                                    <td>{{ item.id_historii }}</td>
-                                    <td>{{ item.tabela_zrodlowa }}</td>
-                                    <td>{{ item.id_rekordu }}</td>
-                                    <td>
-                                        {% if item.operacja == 'INSERT' %}
-                                        <span class="badge bg-success">{{ item.operacja }}</span>
-                                        {% elif item.operacja == 'UPDATE' %}
-                                        <span class="badge bg-warning text-dark">{{ item.operacja }}</span>
-                                        {% elif item.operacja == 'DELETE' %}
-                                        <span class="badge bg-danger">{{ item.operacja }}</span>
-                                        {% else %}
-                                        <span class="badge bg-secondary">{{ item.operacja }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ item.data_operacji|date:"d.m.Y H:i:s"|default:"-" }}</td>
-                                    <td>{{ item.miasto|default:"-" }}</td>
-                                    <td>
-                                        {% if item.imie and item.nazwisko %}
-                                        {{ item.imie }} {{ item.nazwisko }}
-                                        {% else %}
-                                        ID: {{ item.id_user|default:"-" }}
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#szczegolyModal"
-                                                data-id="{{ item.id_historii }}"
-                                                data-tabela="{{ item.tabela_zrodlowa }}"
-                                                data-rekord="{{ item.id_rekordu }}"
-                                                data-operacja="{{ item.operacja }}"
-                                                data-data="{{ item.data_operacji|date:'d.m.Y H:i:s'|default:'-' }}"
-                                                data-miasto="{{ item.miasto|default:'-' }}"
-                                                data-ulica="{{ item.ulica|default:'-' }}"
-                                                data-nr="{{ item.nr_ulicy|default:'-' }}"
-                                                data-kod="{{ item.kod_pocztowy|default:'-' }}"
-                                                data-user="{{ item.id_user|default:'-' }}"
-                                                data-imie="{{ item.imie|default:'-' }}"
-                                                data-nazwisko="{{ item.nazwisko|default:'-' }}"
-                                                data-pesel="{{ item.pesel|default:'-' }}"
-                                                data-email="{{ item.email|default:'-' }}"
-                                                data-zamieszkanie="{{ item.id_zamieszkania|default:'-' }}">
-                                            Szczegóły
-                                        </button>
-                                    </td>
-                                </tr>
-                            {% empty %}
-                                <tr><td colspan="8" class="text-center">Brak danych w historii zmian.</td></tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                <hr>
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6 class="fw-bold">Użytkownik</h6>
+                    <dl class="row">
+                      <dt class="col-sm-4">ID:</dt><dd class="col-sm-8" id="szczegoly_user"></dd>
+                      <dt class="col-sm-4">Imię:</dt><dd class="col-sm-8" id="szczegoly_imie"></dd>
+                      <dt class="col-sm-4">Nazwisko:</dt><dd class="col-sm-8" id="szczegoly_nazwisko"></dd>
+                      <dt class="col-sm-4">PESEL:</dt><dd class="col-sm-8" id="szczegoly_pesel"></dd>
+                      <dt class="col-sm-4">Email:</dt><dd class="col-sm-8" id="szczegoly_email"></dd>
+                    </dl>
+                  </div>
                 </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+              </div>
             </div>
-
-            <!-- Modal ze szczegółami -->
-            <div class="modal fade" id="szczegolyModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Szczegóły zmiany</h5>
-                            <button class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6 class="fw-bold">Informacje o zmianie</h6>
-                                    <dl class="row">
-                                        <dt class="col-sm-4">ID:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_id"></dd>
-                                        
-                                        <dt class="col-sm-4">Tabela źródłowa:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_tabela"></dd>
-                                        
-                                        <dt class="col-sm-4">ID rekordu:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_rekord"></dd>
-                                        
-                                        <dt class="col-sm-4">Operacja:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_operacja"></dd>
-                                        
-                                        <dt class="col-sm-4">Data operacji:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_data"></dd>
-                                    </dl>
-                                </div>
-                                
-                                <div class="col-md-6">
-                                    <h6 class="fw-bold">Dane adresowe</h6>
-                                    <dl class="row">
-                                        <dt class="col-sm-4">Miasto:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_miasto"></dd>
-                                        
-                                        <dt class="col-sm-4">Ulica:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_ulica"></dd>
-                                        
-                                        <dt class="col-sm-4">Nr ulicy:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_nr"></dd>
-                                        
-                                        <dt class="col-sm-4">Kod pocztowy:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_kod"></dd>
-                                        
-                                        <dt class="col-sm-4">ID zamieszkania:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_zamieszkanie"></dd>
-                                    </dl>
-                                </div>
-                            </div>
-                            
-                            <hr>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6 class="fw-bold">Dane użytkownika</h6>
-                                    <dl class="row">
-                                        <dt class="col-sm-4">ID użytkownika:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_user"></dd>
-                                        
-                                        <dt class="col-sm-4">Imię:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_imie"></dd>
-                                        
-                                        <dt class="col-sm-4">Nazwisko:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_nazwisko"></dd>
-                                        
-                                        <dt class="col-sm-4">PESEL:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_pesel"></dd>
-                                        
-                                        <dt class="col-sm-4">Email:</dt>
-                                        <dd class="col-sm-8" id="szczegoly_email"></dd>
-                                    </dl>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
+      </div> 
     </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.4.0/mdb.min.js"></script>
-<script>
+  </div> 
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.4.0/mdb.min.js"></script>
+  <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const szczegolyModal = document.getElementById('szczegolyModal');
-        szczegolyModal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            
-            // Wypełnij dane w modalu
-            document.getElementById('szczegoly_id').textContent = button.getAttribute('data-id');
-            document.getElementById('szczegoly_tabela').textContent = button.getAttribute('data-tabela');
-            document.getElementById('szczegoly_rekord').textContent = button.getAttribute('data-rekord');
-            
-            const operacja = button.getAttribute('data-operacja');
-            let operacjaElement = document.getElementById('szczegoly_operacja');
-            operacjaElement.textContent = operacja;
-            
-            // Dodawanie kolorów do operacji
-            operacjaElement.className = "";
-            if (operacja === 'INSERT') {
-                operacjaElement.classList.add('badge', 'bg-success');
-            } else if (operacja === 'UPDATE') {
-                operacjaElement.classList.add('badge', 'bg-warning', 'text-dark');
-            } else if (operacja === 'DELETE') {
-                operacjaElement.classList.add('badge', 'bg-danger');
-            } else {
-                operacjaElement.classList.add('badge', 'bg-secondary');
-            }
-            
-            document.getElementById('szczegoly_data').textContent = button.getAttribute('data-data');
-            document.getElementById('szczegoly_miasto').textContent = button.getAttribute('data-miasto');
-            document.getElementById('szczegoly_ulica').textContent = button.getAttribute('data-ulica');
-            document.getElementById('szczegoly_nr').textContent = button.getAttribute('data-nr');
-            document.getElementById('szczegoly_kod').textContent = button.getAttribute('data-kod');
-            document.getElementById('szczegoly_user').textContent = button.getAttribute('data-user');
-            document.getElementById('szczegoly_imie').textContent = button.getAttribute('data-imie');
-            document.getElementById('szczegoly_nazwisko').textContent = button.getAttribute('data-nazwisko');
-            document.getElementById('szczegoly_pesel').textContent = button.getAttribute('data-pesel');
-            document.getElementById('szczegoly_email').textContent = button.getAttribute('data-email');
-            document.getElementById('szczegoly_zamieszkanie').textContent = button.getAttribute('data-zamieszkanie');
+      const modal = document.getElementById('szczegolyModal');
+      modal.addEventListener('show.bs.modal', function (e) {
+        const btn = e.relatedTarget;
+        const fields = [
+          "id", "tabela", "rekord", "operacja", "data",
+          "miasto", "ulica", "nr", "kod", "zamieszkanie",
+          "user", "imie", "nazwisko", "pesel", "email"
+        ];
+        fields.forEach(field => {
+          document.getElementById("szczegoly_" + field).textContent = btn.getAttribute("data-" + field);
         });
+
+        const operacja = btn.getAttribute("data-operacja");
+        const el = document.getElementById("szczegoly_operacja");
+        el.className = "";
+        el.classList.add("badge");
+        if (operacja === "INSERT") el.classList.add("bg-success");
+        else if (operacja === "UPDATE") el.classList.add("bg-warning", "text-dark");
+        else if (operacja === "DELETE") el.classList.add("bg-danger");
+        else el.classList.add("bg-secondary");
+      });
     });
-</script>
+  </script>
 </body>
 </html>

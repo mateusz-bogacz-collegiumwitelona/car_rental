@@ -1,23 +1,24 @@
-{% load static%}
-<div class="d-flex flex-column p-3 text-white bg-dark" style="min-height: 100vh; height: auto;">
-    <h4 class="mb-2 text-center">Panel Administracyjny</h4>
+{% load static %}
+<div class="d-none d-lg-block col-lg-2 bg-dark text-white p-3 min-vh-100">
+  <h4 class="mb-2 text-center">Panel Administracyjny</h4>
 
-    <div class="flex-grow-1">
-        <a href="{% url 'admin_car_view' %}" class="btn btn-dark p-4 w-100 hover-effect justify-content-center align-items-center d-flex">Zarządzaj flotą</a>
-        <a href="{% url 'admin_address_view' %}" class="btn btn-dark p-4 w-100 hover-effect justify-content-center align-items-center d-flex">Zarządzaj adresami zamieszkania</a>
-        <a href="{% url 'admin_rent_view' %}" class="btn btn-dark p-4 w-100 hover-effect justify-content-center align-items-center d-flex">Zarządzaj wypożyczeniami</a>
-        <a href="{% url 'admin_admin_view' %}" class="btn btn-dark p-4 w-100 hover-effect justify-content-center align-items-center d-flex">Zarządzaj administratorami</a>
-        <a href="{% url 'admin_user_view' %}" class="btn btn-dark p-4 w-100 hover-effect justify-content-center align-items-center d-flex">Zarządzaj użytkownikami</a>
-        <a href="{% url 'admin_blackList_view' %}" class="btn btn-dark p-4 w-100 hover-effect justify-content-center align-items-center d-flex">Zarządzaj czarną listą</a>      
-    </div>
+  <div class="flex-grow-1">
+    <a href="{% url 'admin_car_view' %}" class="btn btn-dark p-4 w-100 hover-effect justify-content-center align-items-center d-flex">Zarządzaj flotą</a>
+    <a href="{% url 'admin_address_view' %}" class="btn btn-dark p-4 w-100 hover-effect justify-content-center align-items-center d-flex">Zarządzaj adresami zamieszkania</a>
+    <a href="{% url 'admin_rent_view' %}" class="btn btn-dark p-4 w-100 hover-effect justify-content-center align-items-center d-flex">Zarządzaj wypożyczeniami</a>
+    <a href="{% url 'admin_admin_view' %}" class="btn btn-dark p-4 w-100 hover-effect justify-content-center align-items-center d-flex">Zarządzaj administratorami</a>
+    <a href="{% url 'admin_user_view' %}" class="btn btn-dark p-4 w-100 hover-effect justify-content-center align-items-center d-flex">Zarządzaj użytkownikami</a>
+    <a href="{% url 'admin_blackList_view' %}" class="btn btn-dark p-4 w-100 hover-effect justify-content-center align-items-center d-flex">Zarządzaj czarną listą</a>      
+    <a href="{% url 'admin_histroy_change_list' %}" class="btn btn-dark p-4 w-100 hover-effect justify-content-center align-items-center d-flex">Zarządzaj zmianami</a>     
+  </div>
 
-    <hr class="text-light">
+  <hr class="text-light">
 
-    <a href="{% url 'logout' %}" class="btn btn-danger w-100 my-2 text-center p-2 justify-content-center">Wyloguj</a>
+  <a href="{% url 'logout' %}" class="btn btn-danger w-100 my-2 text-center p-2 justify-content-center">Wyloguj</a>
 </div>
 
 <style>
-    .hover-effect:hover {
-        background-color: #555 !important;
-    }
+  .hover-effect:hover {
+    background-color: #555 !important;
+  }
 </style>
