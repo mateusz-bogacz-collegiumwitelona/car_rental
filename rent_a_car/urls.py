@@ -22,5 +22,6 @@ urlpatterns = [
     path('ban-info/', views.user_ban_info, name='user_ban_info'),
     path('rent-car/<int:car_id>/', views.rent_car, name='rent_car'),
     path('admin/samochod/<int:car_id>/', views.admin_car_detail, name='admin_car_detail'),
+    path('admin/historia-zmian', views.admin_histroy_change_list, name='admin_histroy_change_list')
 ]
 

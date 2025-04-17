@@ -7,7 +7,7 @@ import os
 
 from .forms import (
     LoginForm, CarForm, CityForm, UserForm,
-    AdminForm, RentForm, BlackListForm, RegistrationForm
+    AdminForm, RentForm, BlackListForm, RegistrationForm, 
 )
 from .models import Auta, AutaZdj
 
@@ -16,6 +16,7 @@ from .services.car_service import CarService
 from .services.rental_service import RentalService
 from .services.admin_service import AdminService
 from .services.blacklist_service import BlacklistService
+from .services.change_history_service import ChangeHistoryService
 
 logger = logging.getLogger(__name__)
 
@@ -793,6 +794,42 @@ def admin_car_detail(request, car_id):
     }
     
     return render(request, 'admin_car_detail.html', context)
+
+def admin_histroy_change_list(request):
+    service = ChangeHistoryService()
+
+    if 'export_csv' in request.GET:
+        params = {}
+        
+        for field in ['tabela_zrodlowa', 'operacja', 'miasto', 'id_user']:
+            if request.GET.get(field):
+                params[field] = request.GET.get(field)
+
+        if params:
+            histroy_change = service.filter_history_change(params)
+        else:
+            histroy_change = service.get_all_history_change()
+            
+        return service.export_to_csv(histroy_change)
+    
+    params = {}
+    
+    for field in ['tabela_zrodlowa', 'operacja', 'miasto', 'id_user']:
+        if request.GET.get(field):
+            params[field] = request.GET.get(field)
+    
+    if params:
+        histroy_change = service.filter_history_change(params)
+    else:
+        histroy_change = service.get_all_history_change()
+
+    context = {
+        'historia_zmian_list': histroy_change,
+        'title': 'Historia zmian'
+    }
+    
+    return render(request, 'admin_history_change_list.html', context)
+
 
 # Obsługa błędów
 def handler404(request, exception):

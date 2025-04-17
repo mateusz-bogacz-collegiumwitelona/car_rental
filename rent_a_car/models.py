@@ -220,3 +220,27 @@ class Wypozyczenie(models.Model):
     class Meta:
         managed = False
         db_table = 'wypozyczenie'
+
+class HistoriaZmian(models.Model):
+    id_historii = models.AutoField(primary_key=True)
+    tabela_zrodlowa = models.CharField(max_length=50)
+    id_rekordu = models.IntegerField()
+    operacja = models.CharField(max_length=10)
+    data_operacji = models.DateTimeField(blank=True, null=True)
+    miasto = models.CharField(max_length=100, blank=True, null=True)
+    ulica = models.CharField(max_length=100, blank=True, null=True)
+    nr_ulicy = models.CharField(max_length=5, blank=True, null=True)
+    kod_pocztowy = models.CharField(max_length=6, blank=True, null=True)
+    id_user = models.IntegerField(blank=True, null=True)
+    imie = models.CharField(max_length=100, blank=True, null=True)
+    nazwisko = models.CharField(max_length=100, blank=True, null=True)
+    pesel = models.CharField(max_length=11, blank=True, null=True)
+    email = models.CharField(max_length=50, blank=True, null=True)
+    id_zamieszkania = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'historia_zmian'
+    
+    def __str__(self):
+        return f"Historia {self.operacja} - {self.tabela_zrodlowa} (ID: {self.id_historii})"

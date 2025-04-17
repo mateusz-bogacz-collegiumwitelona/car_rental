@@ -86,7 +86,7 @@ Jeżeli baza danych została przywrócona bez danych, należy stworzyć użytkow
 
 2. Wejdź w powłokę bash kontenera:
    ```sh
-   docker-compose exec -it rent_a_car bash
+   docker exec -it rent_a_car bash
    ```
 
 3. Uruchom powłokę Pythona:
