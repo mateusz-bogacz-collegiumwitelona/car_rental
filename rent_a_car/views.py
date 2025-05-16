@@ -35,7 +35,7 @@ def index_view(request):
 def admin_dashboard(request):
     if not is_admin_logged_in(request):
         return redirect('login')
-    return render(request, 'admin-dashboard.html')
+    return render(request, 'admin/admin-dashboard.html')
 
 # Użytkownik - Dashboard
 def user_dashboard(request):
@@ -49,7 +49,7 @@ def user_dashboard(request):
     
     cars = CarService.get_all_cars_with_status()
     
-    return render(request, 'user_dashboard.html', {'cars': cars})
+    return render(request, 'user/user_dashboard.html', {'cars': cars})
 
 # Logowanie
 def login_view(request):
@@ -159,7 +159,7 @@ def admin_car_view(request):
                 messages.success(request, 'Auto zostało zaktualizowane.')
                 return redirect('admin_car_view')
     
-    return render(request, 'admin_car_view.html', {'auta': cars, 'form': form})
+    return render(request, 'admin/admin_car_view.html', {'auta': cars, 'form': form})
 
 # Administracja - Zarządzanie adresami
 def admin_address_view(request):
@@ -202,7 +202,7 @@ def admin_address_view(request):
                 messages.success(request, 'Adres został zaktualizowany.')
                 return redirect('admin_address_view')
     
-    return render(request, 'admin_address_view.html', {'miasta': addresses, 'form': form})
+    return render(request, 'admin/admin_address_view.html', {'miasta': addresses, 'form': form})
 
 
 
@@ -250,7 +250,7 @@ def admin_rent_view(request):
                 messages.success(request, 'Wypożyczenie zostało zaktualizowane.')
                 return redirect('admin_rent_view')
     
-    return render(request, 'admin_rent_view.html', {'wypozyczenia': rentals, 'form': form})
+    return render(request, 'admin/admin_rent_view.html', {'wypozyczenia': rentals, 'form': form})
 
 # Administracja - Zarządzanie administratorami
 def admin_admin_view(request):
@@ -336,7 +336,7 @@ def admin_admin_view(request):
             else:
                 print(f"Edit form errors: {form.errors}")
     
-    return render(request, 'admin_admin_view.html', {'administratorzy': admins, 'form': form})
+    return render(request, 'admin/admin_admin_view.html', {'administratorzy': admins, 'form': form})
 
 # Administracja - Zarządzanie użytkownikami
 def admin_user_view(request):
@@ -436,7 +436,7 @@ def admin_user_view(request):
             else:
                 print(f"Edit form errors: {form.errors}")
     
-    return render(request, 'admin_user_view.html', {'uzytkownicy': users, 'form': form})
+    return render(request, 'admin/admin_user_view.html', {'uzytkownicy': users, 'form': form})
 
 
 # Administracja - Zarządzanie czarną listą
@@ -492,7 +492,7 @@ def admin_blackList_view(request):
                 messages.success(request, 'Wpis czarnej listy został zaktualizowany.')
                 return redirect('admin_blackList_view')
     
-    return render(request, 'admin_blackList_view.html', {'czarna_lista': blacklist, 'form': form})
+    return render(request, 'admin/admin_blackList_view.html', {'czarna_lista': blacklist, 'form': form})
 
 def car_detail(request, car_id):
     if not is_user_logged_in(request):
@@ -516,7 +516,7 @@ def car_detail(request, car_id):
         'today': datetime.now().date()
     }
     
-    return render(request, 'car_detail.html', context)
+    return render(request, 'user/car_detail.html', context)
 
 # Informacja o banie użytkownika
 def user_ban_info(request):
@@ -537,7 +537,7 @@ def user_ban_info(request):
         'ban': active_ban
     }
     
-    return render(request, 'user_ban_info.html', context)
+    return render(request, 'user/user_ban_info.html', context)
 
 # Wypożyczenie auta
 def rent_car(request, car_id):
@@ -585,7 +585,7 @@ def rent_car(request, car_id):
         'form': form
     }
     
-    return render(request, 'rent_car.html', context)
+    return render(request, 'user/rent_car.html', context)
 
 # Administracja - Zarządzanie zdjęciami samochodów
 def admin_car_photos(request, car_id):
@@ -747,7 +747,7 @@ def admin_car_photos(request, car_id):
         'available_images': available_images,
     }
     
-    return render(request, 'admin_car_photos.html', context)
+    return render(request, 'admin/admin_car_photos.html', context)
 
 # Administracja - Szczegóły auta
 def admin_car_detail(request, car_id):
@@ -793,7 +793,7 @@ def admin_car_detail(request, car_id):
         'active_tab': request.GET.get('tab', 'info')
     }
     
-    return render(request, 'admin_car_detail.html', context)
+    return render(request, 'admin/admin_car_detail.html', context)
 
 def admin_histroy_change_list(request):
     service = ChangeHistoryService()
@@ -828,15 +828,15 @@ def admin_histroy_change_list(request):
         'title': 'Historia zmian'
     }
     
-    return render(request, 'admin_history_change_list.html', context)
+    return render(request, 'admin/admin_history_change_list.html', context)
 
 
 # Obsługa błędów
 def handler404(request, exception):
-    return render(request, '404.html', status=404)
+    return render(request, 'error/404.html', status=404)
 
 def handler400(request, exception):
-    return render(request, '400.html', status=400)
+    return render(request, 'error/400.html', status=400)
 
 def handler500(request):
-    return render(request, '500.html', status=500)
+    return render(request, 'error/500.html', status=500)
