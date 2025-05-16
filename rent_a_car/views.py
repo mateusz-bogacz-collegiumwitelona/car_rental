@@ -1,14 +1,23 @@
-import logging
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import models
-from datetime import datetime
+from datetime import datetime, timedelta, date
+from django.contrib.auth.hashers import make_password
+from django.utils.text import slugify
+
+
+import logging
 import os
+from django import forms
+from django.conf import settings
 
 from .forms import (
     LoginForm, CarForm, CityForm, UserForm,
     AdminForm, RentForm, BlackListForm, RegistrationForm, 
 )
+
+from .repositories.user_repository import UserRepository
+
 from .models import Auta, AutaZdj
 
 from .services.user_service import UserService
@@ -128,7 +137,7 @@ def admin_car_view(request):
     if request.method == 'POST':
         if 'dodaj' in request.POST:
             form = CarForm(request.POST)
-            if form.is_valid():  # Upewnij się, że to jest wykonane przed dostępem do cleaned_data
+            if form.is_valid():
                 car_data = {
                     'marka': form.cleaned_data['marka'],
                     'model': form.cleaned_data['model'],
@@ -147,7 +156,7 @@ def admin_car_view(request):
         elif 'edytuj' in request.POST:
             car_id = request.POST.get('id_auta')
             form = CarForm(request.POST)
-            if form.is_valid():  # Tu również potrzebna jest ta linia
+            if form.is_valid():
                 car_data = {
                     'marka': form.cleaned_data['marka'],
                     'model': form.cleaned_data['model'],
@@ -294,7 +303,6 @@ def admin_admin_view(request):
             admin_id = request.POST.get('id_admin')
             print(f"Attempting to delete admin with ID: {admin_id}")
             
-            # Nie pozwól usunąć zalogowanego administratora
             if int(admin_id) == request.session.get('user_id'):
                 messages.error(request, 'Nie możesz usunąć swojego konta!')
                 return redirect('admin_admin_view')
@@ -357,27 +365,20 @@ def admin_user_view(request):
             
             if form.is_valid():
                 print("Form is valid, attempting to create user")
-                
-                # Przygotuj dane użytkownika
+
                 user_data = {
                     'imie': form.cleaned_data['imie'],
                     'nazwisko': form.cleaned_data['nazwisko'],
                     'pesel': form.cleaned_data['pesel'],
                     'email': form.cleaned_data['email'],
                 }
-                
-                # Pobierz hasło i adres zamieszkania
+
                 haslo = form.cleaned_data.get('haslo')
                 id_zamieszkania = form.cleaned_data.get('id_zamieszkania')
                 
                 try:
-                    # Hashuj hasło i dodaj do danych użytkownika
-                    from django.contrib.auth.hashers import make_password
                     user_data['haslo'] = make_password(haslo)
                     user_data['id_zamieszkania'] = id_zamieszkania
-                    
-                    # Utwórz użytkownika za pomocą repozytorium
-                    from .repositories.user_repository import UserRepository
                     user = UserRepository.create_user(user_data)
                     
                     print(f"User created: {user}")
@@ -395,7 +396,6 @@ def admin_user_view(request):
             print(f"Attempting to delete user with ID: {user_id}")
             
             try:
-                from .repositories.user_repository import UserRepository
                 UserRepository.delete_user(user_id)
                 print(f"User deleted with ID: {user_id}")
                 messages.success(request, 'Użytkownik został usunięty.')
@@ -424,7 +424,6 @@ def admin_user_view(request):
                 haslo = form.cleaned_data.get('haslo')
                 
                 try:
-                    # Aktualizuj użytkownika
                     UserService.update_user(user_id, user_data, haslo)
                     print(f"User updated with ID: {user_id}")
                     messages.success(request, 'Użytkownik został zaktualizowany.')
@@ -448,7 +447,6 @@ def admin_blackList_view(request):
     blacklist = BlacklistService.get_all_blacklist()
     form = BlackListForm()
     
-    # Automatycznie ustaw aktualnego administratora jako dodającego
     if request.method == 'GET':
         try:
             admin_id = request.session.get('user_id')
@@ -526,7 +524,6 @@ def user_ban_info(request):
     user_id = request.session.get('user_id')
     user = UserService.get_user_by_id(user_id)
     
-    # Pobierz aktywny ban
     active_ban = UserService.get_active_ban(user_id)
     
     if not active_ban:
@@ -550,6 +547,8 @@ def rent_car(request, car_id):
         return redirect('user_ban_info')
 
     car = CarService.get_car_by_id(car_id)
+    user = UserService.get_user_by_id(user_id)
+    
     if not car:
         messages.error(request, 'Nie znaleziono auta.')
         return redirect('user_dashboard')
@@ -558,14 +557,36 @@ def rent_car(request, car_id):
         messages.error(request, 'To auto jest obecnie niedostępne.')
         return redirect('car_detail', car_id=car_id)
     
+    car_photos = CarService.get_car_photos(car_id)
+    
     if request.method == 'POST':
         form = RentForm(request.POST)
+        
+        form.data = form.data.copy()
+        form.data['id_auta'] = car_id
+        form.data['id_user'] = user_id
+
+        form.fields['id_auta'].widget = forms.HiddenInput()
+        form.fields['id_user'].widget = forms.HiddenInput()
+        
         if form.is_valid():
+            start_date = form.cleaned_data['data_poczatkowa']
+            end_date = form.cleaned_data['data_koncowa']
+
+            today = date.today()
+            if start_date < today:
+                messages.error(request, 'Data początkowa nie może być wcześniejsza niż dzisiaj.')
+                return render(request, 'user/rent_car.html', {'car': car, 'form': form, 'car_photos': car_photos})
+
+            if end_date < start_date:
+                messages.error(request, 'Data końcowa nie może być wcześniejsza niż data początkowa.')
+                return render(request, 'user/rent_car.html', {'car': car, 'form': form, 'car_photos': car_photos})
+            
             rental_data = {
-                'data_poczatkowa': form.cleaned_data['data_poczatkowa'],
-                'data_koncowa': form.cleaned_data['data_koncowa'],
-                'id_auta_id': car_id,
-                'id_user_id': user_id
+                'data_poczatkowa': start_date,
+                'data_koncowa': end_date,
+                'id_auta': car,
+                'id_user': user
             }
             
             rental, error = RentalService.create_rental(rental_data)
@@ -574,20 +595,27 @@ def rent_car(request, car_id):
                 return redirect('user_dashboard')
             else:
                 messages.error(request, error or 'Nie udało się wypożyczyć auta.')
+                return render(request, 'user/rent_car.html', {'car': car, 'form': form, 'car_photos': car_photos})
     else:
+        today = datetime.now().date()
         initial_data = {
-            'data_poczatkowa': datetime.now().date()
+            'data_poczatkowa': today,
+            'data_koncowa': today + timedelta(days=7),
+            'id_auta': car,
+            'id_user': user
         }
         form = RentForm(initial=initial_data)
+        form.fields['id_auta'].widget = forms.HiddenInput()
+        form.fields['id_user'].widget = forms.HiddenInput()
     
     context = {
         'car': car,
-        'form': form
+        'form': form,
+        'car_photos': car_photos
     }
     
     return render(request, 'user/rent_car.html', context)
 
-# Administracja - Zarządzanie zdjęciami samochodów
 def admin_car_photos(request, car_id):
     if not is_admin_logged_in(request):
         messages.error(request, 'Musisz być zalogowany jako administrator.')
@@ -602,7 +630,6 @@ def admin_car_photos(request, car_id):
     available_images = CarService.get_available_images()
     
     if request.method == 'POST':
-        # Obsługa dodawania istniejącego zdjęcia
         if 'add_photo' in request.POST:
             selected_image = request.POST.get('selected_image')
             if selected_image:
@@ -620,45 +647,34 @@ def admin_car_photos(request, car_id):
                     return redirect('admin_car_photos', car_id=car_id)
             else:
                 messages.error(request, 'Nie wybrano zdjęcia.')
-        
-        # Obsługa dodawania nowego zdjęcia z komputera
+
         elif 'upload_photo' in request.POST and request.FILES.get('upload_image'):
             if len(photos) >= 5:
                 messages.error(request, 'Maksymalna liczba zdjęć dla jednego auta to 5.')
             else:
                 try:
-                    # Obsługa przesyłanego pliku
+
                     uploaded_image = request.FILES['upload_image']
                     
-                    # Sprawdzenie czy plik jest obrazem na podstawie rozszerzenia
-                    import os
                     file_ext = os.path.splitext(uploaded_image.name)[1].lower()
                     allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
                     
                     if file_ext not in allowed_extensions:
                         messages.error(request, 'Wybrany plik nie jest obrazem. Dozwolone formaty to: JPG, PNG, GIF, BMP.')
                         return redirect('admin_car_photos', car_id=car_id)
-                    
-                    # Generowanie unikalnej nazwy pliku
-                    from django.utils.text import slugify
+
+
                     filename = f"{slugify(car.marka)}_{slugify(car.model)}_{datetime.now().strftime('%Y%m%d%H%M%S')}{file_ext}"
-                    
-                    # Ścieżka zapisu
-                    from django.conf import settings
-                    
-                    # Upewnij się, że katalog istnieje
+
                     cars_dir = os.path.join(settings.MEDIA_ROOT, 'cars')
                     os.makedirs(cars_dir, exist_ok=True)
-                    
-                    # Pełna ścieżka zapisu
+
                     file_path = os.path.join(cars_dir, filename)
-                    
-                    # Zapisz plik
+
                     with open(file_path, 'wb+') as destination:
                         for chunk in uploaded_image.chunks():
                             destination.write(chunk)
-                    
-                    # Dodaj zdjęcie do bazy danych
+
                     photo_data = {
                         'id_auta_id': car_id,
                         'zdj': f'cars/{filename}',
@@ -672,20 +688,16 @@ def admin_car_photos(request, car_id):
                 except Exception as e:
                     messages.error(request, f'Wystąpił błąd podczas wgrywania zdjęcia: {str(e)}')
         
-        # Obsługa usuwania zdjęcia
         elif 'delete_photo' in request.POST:
             photo_id = request.POST.get('photo_id')
             if photo_id:
                 try:
-                    # Znajdź zdjęcie przed usunięciem, aby poznać jego kolejność
-                    from .models import AutaZdj
+
                     photo = AutaZdj.objects.get(id_zdj=photo_id)
                     deleted_order = photo.kolejnosc
-                    
-                    # Usuń zdjęcie
+
                     CarService.delete_car_photo(photo_id)
-                    
-                    # Aktualizacja kolejności pozostałych zdjęć
+
                     remaining_photos = AutaZdj.objects.filter(id_auta=car_id).order_by('kolejnosc')
                     for i, photo in enumerate(remaining_photos, 1):
                         if photo.kolejnosc != i:
@@ -696,42 +708,35 @@ def admin_car_photos(request, car_id):
                 except Exception as e:
                     messages.error(request, f'Wystąpił błąd podczas usuwania zdjęcia: {str(e)}')
             return redirect('admin_car_photos', car_id=car_id)
-        
-        # Obsługa zmiany kolejności zdjęcia
+
         elif 'change_order' in request.POST:
             photo_id = request.POST.get('photo_id')
             new_order = request.POST.get('new_order')
             
             if photo_id and new_order:
                 try:
-                    from .models import AutaZdj
-                    from django.db import models
+
                     
                     photo_to_update = AutaZdj.objects.get(id_zdj=photo_id)
                     old_order = photo_to_update.kolejnosc
                     new_order = int(new_order)
                     
-                    # Jeśli nowa kolejność jest taka sama, nic nie rób
                     if old_order == new_order:
                         return redirect('admin_car_photos', car_id=car_id)
                     
-                    # Zaktualizuj kolejność innych zdjęć
                     if old_order < new_order:
-                        # Przesuwanie w dół
                         AutaZdj.objects.filter(
                             id_auta=car_id, 
                             kolejnosc__gt=old_order, 
                             kolejnosc__lte=new_order
                         ).update(kolejnosc=models.F('kolejnosc') - 1)
                     else:
-                        # Przesuwanie w górę
                         AutaZdj.objects.filter(
                             id_auta=car_id, 
                             kolejnosc__lt=old_order, 
                             kolejnosc__gte=new_order
                         ).update(kolejnosc=models.F('kolejnosc') + 1)
-                    
-                    # Ustaw nową kolejność dla aktualizowanego zdjęcia
+
                     photo_to_update.kolejnosc = new_order
                     photo_to_update.save()
                     
