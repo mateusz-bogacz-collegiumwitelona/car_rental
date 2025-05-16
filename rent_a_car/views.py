@@ -116,10 +116,14 @@ def register_view(request):
                 'kod_pocztowy': form.cleaned_data['zip_code']
             }
 
-            UserService.create_user(user_data, address_data)
-            
-            messages.success(request, 'Konto zostało utworzone. Możesz się teraz zalogować.')
-            return redirect('login')
+            try:
+                UserService.create_user(user_data, address_data)
+                messages.success(request, 'Konto zostało utworzone. Możesz się teraz zalogować.')
+                return redirect('login')
+            except ValueError as e:
+                messages.error(request, str(e))
+            except Exception as e:
+                messages.error(request, f'Wystąpił błąd podczas tworzenia konta: {str(e)}')
     else:
         form = RegistrationForm()
     
@@ -154,19 +158,29 @@ def admin_car_view(request):
             messages.success(request, 'Auto zostało usunięte.')
             return redirect('admin_car_view')
         elif 'edytuj' in request.POST:
-            car_id = request.POST.get('id_auta')
-            form = CarForm(request.POST)
+            user_id = request.POST.get('id_user')
+            form = UserForm(request.POST)
+            
             if form.is_valid():
-                car_data = {
-                    'marka': form.cleaned_data['marka'],
-                    'model': form.cleaned_data['model'],
-                    'rocznik': form.cleaned_data['rocznik'],
-                    'opis': form.cleaned_data['opis'],
-                    'osiagi': form.cleaned_data['osiagi']
+                user_data = {
+                    'imie': form.cleaned_data['imie'],
+                    'nazwisko': form.cleaned_data['nazwisko'],
+                    'pesel': form.cleaned_data['pesel'],
+                    'email': form.cleaned_data['email'],
+                    'id_zamieszkania': form.cleaned_data['id_zamieszkania']
                 }
-                CarService.update_car(car_id, car_data)
-                messages.success(request, 'Auto zostało zaktualizowane.')
-                return redirect('admin_car_view')
+                
+                haslo = form.cleaned_data.get('haslo')
+                
+                try:
+                    UserService.update_user(user_id, user_data, haslo)
+                    messages.success(request, 'Użytkownik został zaktualizowany.')
+                except ValueError as e:
+                    messages.error(request, str(e))
+                except Exception as e:
+                    messages.error(request, f'Błąd podczas aktualizacji użytkownika: {str(e)}')
+                
+                return redirect('admin_user_view')
     
     return render(request, 'admin/admin_car_view.html', {'auta': cars, 'form': form})
 

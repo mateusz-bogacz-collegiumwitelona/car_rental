@@ -1,6 +1,6 @@
 from django import forms
 from .models import Admin, Auta, Miasta, Uzytkownicy, Wypozyczenie, CzarnaLista
-#logowanie 
+
 class LoginForm(forms.Form):
     email = forms.EmailField(
         label='Email', 
@@ -17,7 +17,6 @@ class LoginForm(forms.Form):
         })
     )
 
-#formularz auta
 class CarForm(forms.ModelForm):
     class Meta:
         model = Auta
@@ -39,8 +38,6 @@ class CarForm(forms.ModelForm):
             'osiagi': 'Osiągi',
         }
 
-
-#folmularz miasta
 class CityForm(forms.ModelForm):
     class Meta:
         model = Miasta
@@ -60,17 +57,16 @@ class CityForm(forms.ModelForm):
             'kod_pocztowy': 'Kod pocztowy',
         }
 
-#folmularz urzytkowicy
 class UserForm(forms.ModelForm):
     haslo = forms.CharField(
         label='Hasło',
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        required=True  # Zmienione na True, żeby wymagało hasła
+        required=True 
     )
     potwierdzenie_hasla = forms.CharField(
         label='Potwierdź Hasło',
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        required=True  # Zmienione na True, żeby wymagało potwierdzenia hasła
+        required=True 
     )
     
     class Meta:
@@ -101,14 +97,13 @@ class UserForm(forms.ModelForm):
         
         return cleaned_data
 
-#formularz admina
 class AdminForm(forms.ModelForm):
     password = forms.CharField(
         label='Hasło', 
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         required=False
     )
-    potwierdzenie_hasla = forms.CharField(  # Changed from check_password to match HTML form
+    potwierdzenie_hasla = forms.CharField( 
         label='Potwierdź hasło', 
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         required=False
@@ -131,14 +126,13 @@ class AdminForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get('password')
-        check_password = cleaned_data.get('potwierdzenie_hasla')  # Now this matches the field name
+        check_password = cleaned_data.get('potwierdzenie_hasla')
 
         if password and password != check_password:
             raise forms.ValidationError("Hasła nie są identyczne.")
         
         return cleaned_data
-    
-#formularz wypożyczenia
+
 class RentForm(forms.ModelForm):
     class Meta:
         model = Wypozyczenie
@@ -166,7 +160,6 @@ class RentForm(forms.ModelForm):
         
         return cleaned_data
 
-#formalrz czarnej listy
 class BlackListForm(forms.ModelForm):
     class Meta:
         model = CzarnaLista
@@ -198,7 +191,6 @@ class BlackListForm(forms.ModelForm):
     
 
 class RegistrationForm(forms.ModelForm):
-    # Pola użytkownika
     password = forms.CharField(
         label='Hasło',
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
@@ -211,7 +203,6 @@ class RegistrationForm(forms.ModelForm):
         required=True
     )
 
-    # Pola adresowe
     city = forms.CharField(
         label='Miasto',
         widget=forms.TextInput(attrs={'class': 'form-control'}),
@@ -262,14 +253,33 @@ class RegistrationForm(forms.ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        if Uzytkownicy.objects.filter(email=email).exists():
+        user_instance = getattr(self, 'instance', None)
+
+        if user_instance and user_instance.pk:
+            user_exists = Uzytkownicy.objects.filter(email=email).exclude(pk=user_instance.pk).exists()
+        else:
+            user_exists = Uzytkownicy.objects.filter(email=email).exists()
+        
+        if user_exists:
             raise forms.ValidationError("Ten adres email jest już używany")
         return email
     
     def clean_kod_pocztowy(self):
         zip_code = self.cleaned_data.get('kod_pocztowy')
-        # Sprawdź, czy kod pocztowy jest w formacie XX-XXX
         import re
         if not re.match(r'^\d{2}-\d{3}$', zip_code):
             raise forms.ValidationError("Kod pocztowy powinien być w formacie XX-XXX")
         return zip_code
+    
+    def clean_pesel(self):
+        pesel = self.cleaned_data.get('pesel')
+        user_instance = getattr(self, 'instance', None)
+        
+        if user_instance and user_instance.pk:
+            pesel_exists = Uzytkownicy.objects.filter(pesel=pesel).exclude(pk=user_instance.pk).exists()
+        else:
+            pesel_exists = Uzytkownicy.objects.filter(pesel=pesel).exists()
+        
+        if pesel_exists:
+            raise forms.ValidationError("Ten numer PESEL jest już używany")
+        return pesel

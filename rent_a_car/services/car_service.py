@@ -1,7 +1,10 @@
 from ..repositories.car_repository import CarRepository
 from ..repositories.rental_repository import RentalRepository
 from datetime import datetime
+from ..repositories.car_repository import CarRepository
+
 import os
+
 from django.conf import settings
         
 class CarService:
@@ -60,7 +63,6 @@ class CarService:
     
     @staticmethod
     def add_car_photo(car_id, photo_data):
-        from ..repositories.car_repository import CarRepository
         car = CarRepository.get_car_by_id(car_id)
         if not car:
             return None

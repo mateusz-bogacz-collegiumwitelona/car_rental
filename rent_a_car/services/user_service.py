@@ -6,13 +6,18 @@ from ..models import Miasta
 class UserService:
     @staticmethod
     def create_user(user_data, address_data):
+        if UserRepository.check_email_exists(user_data['email']):
+            raise ValueError("Ten adres email jest już używany przez innego użytkownika")
+
+        if UserRepository.check_pesel_exists(user_data['pesel']):
+            raise ValueError("Ten numer PESEL jest już używany przez innego użytkownika")
+        
         address = UserRepository.create_address(address_data)
         
         user_data['haslo'] = make_password(user_data['haslo'])
         user_data['id_zamieszkania'] = address
 
         user = UserRepository.create_user(user_data)
-
         return user
     
     @staticmethod
@@ -38,7 +43,15 @@ class UserService:
         
         if not user:
             return None
+
+        if 'email' in user_data and user_data['email'] != user.email:
+            if UserRepository.check_email_exists(user_data['email'], exclude_user_id=user_id):
+                raise ValueError("Ten adres email jest już używany przez innego użytkownika")
         
+        if 'pesel' in user_data and user_data['pesel'] != user.pesel:
+            if UserRepository.check_pesel_exists(user_data['pesel'], exclude_user_id=user_id):
+                raise ValueError("Ten numer PESEL jest już używany przez innego użytkownika")
+
         for key, value in user_data.items():
             setattr(user, key, value)
 
@@ -46,7 +59,6 @@ class UserService:
             user.haslo = make_password(password)
         
         UserRepository.update_user(user)
-
         return user
     
     @staticmethod
@@ -72,5 +84,4 @@ class UserService:
     @staticmethod
     def update_address(address_id, address_data):
         return UserRepository.update_address(address_id, address_data)
-    
     

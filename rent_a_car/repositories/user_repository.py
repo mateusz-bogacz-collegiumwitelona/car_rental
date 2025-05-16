@@ -52,3 +52,17 @@ class UserRepository:
     @staticmethod
     def get_address_by_id(address_id):
         return Miasta.objects.filter(id_zamieszkania=address_id).first()
+    
+    @staticmethod
+    def check_email_exists(email, exclude_user_id=None):
+        query = Uzytkownicy.objects.filter(email=email)
+        if exclude_user_id:
+            query = query.exclude(id_user=exclude_user_id)
+        return query.exists()
+    
+    @staticmethod
+    def check_pesel_exists(pesel, exclude_user_id=None):
+        query = Uzytkownicy.objects.filter(pesel=pesel)
+        if exclude_user_id:
+            query = query.exclude(id_user=exclude_user_id)
+        return query.exists()

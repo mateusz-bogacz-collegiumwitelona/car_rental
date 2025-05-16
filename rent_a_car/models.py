@@ -197,8 +197,8 @@ class Uzytkownicy(models.Model):
     id_user = models.AutoField(primary_key=True)
     imie = models.CharField(max_length=100)
     nazwisko = models.CharField(max_length=100)
-    pesel = models.CharField(db_column='PESEL', max_length=11)  # Field name made lowercase.
-    email = models.CharField(max_length=50)
+    pesel = models.CharField(db_column='PESEL', max_length=11, unique=True)
+    email = models.CharField(max_length=50, unique=True)
     haslo = models.CharField(max_length=100)
     id_zamieszkania = models.ForeignKey(Miasta, models.DO_NOTHING, db_column='id_zamieszkania')
 
