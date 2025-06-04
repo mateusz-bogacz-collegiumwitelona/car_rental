@@ -128,11 +128,11 @@ W folderze databases jest plik `backup_with_example_data.backup`. Po jego przywr
 Użytkownicy dostępni w tym pliku to:
 - Admin:
    - email: `admin@admin.pl`
-   - hasło `test123`
+   - hasło: `test123`
 
 - Użytkownk bez bana:
    - email: `user@user.pl`
-   - hasło: `test098`
+   - hasło: `test123`
 
 - Użytkownik z banem:
   - email: `bogdan@bogdan.pl`
